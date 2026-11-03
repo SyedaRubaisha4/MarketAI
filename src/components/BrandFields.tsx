@@ -14,12 +14,12 @@ export interface BrandFieldErrors {
 export function BrandSectionTitle({ icon: Icon, title, subtitle }: { icon: LucideIcon; title: string; subtitle: string }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
         <Icon className="h-[18px] w-[18px]" aria-hidden />
       </span>
       <div>
         <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-        <p className="text-sm text-slate-500">{subtitle}</p>
+        <p className="text-sm text-slate-600">{subtitle}</p>
       </div>
     </div>
   )

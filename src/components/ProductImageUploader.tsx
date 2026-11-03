@@ -81,7 +81,7 @@ export function ProductImageUploader({ images, onChange, error }: UploaderProps)
           <UploadCloud className="h-7 w-7" aria-hidden />
         </span>
         <p className="mt-4 text-sm font-semibold text-slate-700">
-          Drop image here or <span className="text-primary-600 underline underline-offset-2">click to upload</span>
+          Drop image here or <span className="text-primary-700 underline underline-offset-2">click to upload</span>
         </p>
         <p className="mt-1 text-xs text-slate-400">Upload up to {MAX_IMAGES} images · JPG, PNG, WebP, GIF · max 5 MB each</p>
       </div>
@@ -121,7 +121,7 @@ export function ProductImageUploader({ images, onChange, error }: UploaderProps)
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 text-slate-400 hover:border-primary-400 hover:text-primary-600"
+                className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-xl border border-slate-200 text-slate-400 hover:border-primary-400 hover:text-primary-700"
                 aria-label="Add more images"
               >
                 <ImagePlus className="h-5 w-5" />

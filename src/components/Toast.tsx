@@ -19,7 +19,7 @@ export function ToastViewport() {
             <Icon className={cn('mt-0.5 h-5 w-5 shrink-0', classes)} aria-hidden />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-slate-900">{t.title}</p>
-              {t.description && <p className="mt-0.5 text-sm text-slate-500 leading-relaxed">{t.description}</p>}
+              {t.description && <p className="mt-0.5 text-sm text-slate-600 leading-relaxed">{t.description}</p>}
             </div>
             <button onClick={() => dismissToast(t.id)} className="rounded p-0.5 text-slate-400 hover:text-slate-600" aria-label="Dismiss notification">
               <X className="h-4 w-4" />

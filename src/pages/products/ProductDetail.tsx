@@ -32,7 +32,7 @@ export default function ProductDetail() {
 
   return (
     <div className="space-y-6">
-      <Link to="/products" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800">
+      <Link to="/products" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-800">
         <ArrowLeft className="h-4 w-4" aria-hidden /> Back to Products
       </Link>
 
@@ -57,7 +57,7 @@ export default function ProductDetail() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h1 className="text-xl font-bold text-slate-900">{product.name}</h1>
-                <p className="mt-1 text-sm text-slate-500">{product.category}</p>
+                <p className="mt-1 text-sm text-slate-600">{product.category}</p>
               </div>
               <StatusBadge status={product.status} />
             </div>
@@ -97,20 +97,20 @@ export default function ProductDetail() {
             {content ? (
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Approval progress</span>
+                  <span className="text-slate-600">Approval progress</span>
                   <span className="font-semibold text-slate-800">{approvedCount} of {totalSections} sections approved</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                   <div className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-700 transition-all" style={{ width: `${(approvedCount / totalSections) * 100}%` }} />
                 </div>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-600">
                   Generated {new Date(content.generatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   {' — '}includes name options, descriptions, SEO package and platform captions.
                 </p>
               </div>
             ) : (
               <div className="mt-3 flex flex-col items-start gap-3">
-                <p className="text-sm text-slate-500">No content generated yet. Generate a full marketing package in about 60 seconds.</p>
+                <p className="text-sm text-slate-600">No content generated yet. Generate a full marketing package in about 60 seconds.</p>
                 <Button size="sm" onClick={() => navigate(`/products/${product.id}/generate`)}><Sparkles className="h-4 w-4" aria-hidden /> Generate with AI</Button>
               </div>
             )}
@@ -149,7 +149,7 @@ function ScheduledForProduct({ productId }: { productId: string }) {
       {posts.map((p) => (
         <li key={p.id} className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5 text-sm">
           <span className="font-medium text-slate-700">{p.title}</span>
-          <span className="text-xs text-slate-500">{p.date} at {p.time}</span>
+          <span className="text-xs text-slate-600">{p.date} at {p.time}</span>
         </li>
       ))}
     </ul>

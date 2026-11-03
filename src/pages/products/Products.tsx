@@ -169,7 +169,7 @@ function ProductActions({ product, onDelete }: { product: Product; onDelete: () 
       </button>
       <button
         onClick={() => navigate(hasContent ? `/products/${product.id}/review` : `/products/${product.id}/generate`)}
-        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-primary-50 hover:text-primary-600"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-primary-50 hover:text-primary-700"
         aria-label={hasContent ? `Review content for ${product.name}` : `Generate content for ${product.name}`}
         title={hasContent ? 'Review content' : 'Generate content'}
       >
@@ -195,7 +195,7 @@ function ProductCard({ product, onDelete }: { product: Product; onDelete: () => 
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <Link to={`/products/${product.id}`} className="truncate text-sm font-semibold text-slate-900 hover:text-primary-700">{product.name}</Link>
-            <p className="mt-0.5 text-xs text-slate-500">{product.category}</p>
+            <p className="mt-0.5 text-xs text-slate-600">{product.category}</p>
           </div>
           <p className="shrink-0 text-sm font-bold text-slate-900">{product.currency} {product.price.toLocaleString()}</p>
         </div>
@@ -214,7 +214,7 @@ function ProductRow({ product, onDelete }: { product: Product; onDelete: () => v
       <Link to={`/products/${product.id}`}><ProductThumb product={product} className="h-12 w-12 rounded-xl object-cover" /></Link>
       <div className="min-w-0 flex-1">
         <Link to={`/products/${product.id}`} className="truncate text-sm font-semibold text-slate-900 hover:text-primary-700">{product.name}</Link>
-        <p className="text-xs text-slate-500">{product.category} · {product.currency} {product.price.toLocaleString()}</p>
+        <p className="text-xs text-slate-600">{product.category} · {product.currency} {product.price.toLocaleString()}</p>
       </div>
       <div className="hidden md:block"><StatusBadge status={product.status} /></div>
       <p className="hidden w-28 text-right text-xs text-slate-400 lg:block">{new Date(product.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>

@@ -88,11 +88,11 @@ export default function ProductForm() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <Link to={isEdit ? `/products/${productId}` : '/products'} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800">
+        <Link to={isEdit ? `/products/${productId}` : '/products'} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-800">
           <ArrowLeft className="h-4 w-4" aria-hidden /> Back to Products
         </Link>
         <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900">{isEdit ? 'Edit Product' : 'Add New Product'}</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-600">
           {isEdit ? 'Update your product details, then regenerate content if anything changed.' : 'Add the basics and AI will build a complete marketing package.'}
         </p>
       </div>

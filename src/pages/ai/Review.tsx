@@ -107,7 +107,7 @@ export default function Review() {
 
   return (
     <div className="space-y-6">
-      <Link to={`/products/${product.id}`} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800">
+      <Link to={`/products/${product.id}`} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-800">
         <ArrowLeft className="h-4 w-4" aria-hidden /> Back to Product
       </Link>
 
@@ -115,9 +115,9 @@ export default function Review() {
         <div className="flex flex-1 items-center gap-4">
           {primary && <img src={primary.url} alt={product.name} className="h-16 w-16 rounded-2xl object-cover" />}
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">Review Generated Content</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">Review Generated Content</p>
             <h1 className="text-xl font-bold text-slate-900">{product.name}</h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-600">
               Generated {new Date(content.generatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
@@ -156,7 +156,7 @@ export default function Review() {
         <aside className="xl:sticky xl:top-24 xl:self-start">
           <div className="card p-5">
             <h2 className="text-sm font-semibold text-slate-900">Approval Progress</h2>
-            <p className="mt-1 text-sm text-slate-500">{approvedCount} of {total} sections approved</p>
+            <p className="mt-1 text-sm text-slate-600">{approvedCount} of {total} sections approved</p>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
               <div className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-700 transition-all" style={{ width: `${(approvedCount / total) * 100}%` }} />
             </div>
@@ -166,7 +166,7 @@ export default function Review() {
                   {content.sections[key].approved
                     ? <Check className="h-4 w-4 shrink-0 text-green-600" aria-hidden />
                     : <span className="h-4 w-4 shrink-0 rounded-full border-2 border-slate-300" aria-hidden />}
-                  <span className={content.sections[key].approved ? 'text-slate-500' : 'font-medium text-slate-700'}>{title}</span>
+                  <span className={content.sections[key].approved ? 'text-slate-600' : 'font-medium text-slate-700'}>{title}</span>
                 </li>
               ))}
             </ul>
@@ -208,7 +208,7 @@ function SectionCard({ sectionKey, title, icon: Icon, content, approved, onAppro
     <section className={cn('card transition-shadow', approved && 'border-green-200/80')}>
       <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
         <div className="flex items-center gap-3">
-          <span className={cn('flex h-9 w-9 items-center justify-center rounded-xl', approved ? 'bg-green-50 text-green-600' : 'bg-primary-50 text-primary-600')}>
+          <span className={cn('flex h-9 w-9 items-center justify-center rounded-xl', approved ? 'bg-green-50 text-green-600' : 'bg-primary-50 text-primary-700')}>
             <Icon className="h-[18px] w-[18px]" aria-hidden />
           </span>
           <h2 className="text-base font-semibold text-slate-900">{title}</h2>
@@ -236,7 +236,7 @@ function SectionCard({ sectionKey, title, icon: Icon, content, approved, onAppro
               <ul className="grid gap-2 sm:grid-cols-2">
                 {content.features.map((f) => (
                   <li key={f} className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                    <Check className="h-3.5 w-3.5 shrink-0 text-primary-600" aria-hidden /> {f}
+                    <Check className="h-3.5 w-3.5 shrink-0 text-primary-700" aria-hidden /> {f}
                   </li>
                 ))}
               </ul>
@@ -316,7 +316,7 @@ function NameSection({ content, editing, onEditSave }: { content: GeneratedConte
       <p className="text-lg font-bold text-slate-900">{content.selectedName}</p>
       <div className="flex flex-wrap gap-2">
         {content.names.filter((n) => n !== content.selectedName).map((n) => (
-          <span key={n} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">{n}</span>
+          <span key={n} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">{n}</span>
         ))}
       </div>
     </div>
@@ -423,7 +423,7 @@ function InstagramSection({ content, editing, onEditSave }: { content: Generated
     <div className="grid gap-4 sm:grid-cols-[1fr_160px]">
       <div>
         <p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">{content.instagram.caption}</p>
-        <p className="mt-2 text-sm text-primary-600">{content.instagram.hashtags.join(' ')}</p>
+        <p className="mt-2 text-sm text-primary-700">{content.instagram.hashtags.join(' ')}</p>
         <div className="mt-2"><CharCount value={content.instagram.caption} max={2200} /></div>
       </div>
       {content.imageUrl && (
@@ -474,7 +474,7 @@ function WhatsAppSection({ content, editing, onEditSave }: { content: GeneratedC
     <div className="max-w-md">
       <div className="rounded-2xl rounded-tl-md bg-[#dcf8c6] px-4 py-3 shadow-sm">
         <p className="whitespace-pre-line text-sm leading-relaxed text-slate-800">{content.whatsapp.message}</p>
-        <p className="mt-1 text-right text-[10px] text-slate-500">now ✓✓</p>
+        <p className="mt-1 text-right text-[10px] text-slate-600">now ✓✓</p>
       </div>
     </div>
   )
@@ -483,7 +483,7 @@ function WhatsAppSection({ content, editing, onEditSave }: { content: GeneratedC
 function ImageSection({ content }: { content: GeneratedContent }) {
   if (!content.imageUrl) {
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-500">
+      <div className="flex items-center gap-3 rounded-xl border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-600">
         <Package className="h-5 w-5 text-slate-400" aria-hidden />
         No enhanced visual generated — the original product image will be used.
       </div>
@@ -492,7 +492,7 @@ function ImageSection({ content }: { content: GeneratedContent }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row">
       <img src={content.imageUrl} alt="Generated marketing visual" className="h-44 w-44 rounded-xl border border-slate-200 object-cover" />
-      <div className="space-y-1.5 text-sm text-slate-500">
+      <div className="space-y-1.5 text-sm text-slate-600">
         <p className="font-medium text-slate-700">Enhanced product visual (mock)</p>
         <p>Image enhancement is simulated in this demo — the original product photo is shown as the marketing visual.</p>
       </div>

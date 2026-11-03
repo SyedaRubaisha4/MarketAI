@@ -45,7 +45,7 @@ export default function BrandSetup() {
   return (
     <AuthLayout side={<OnboardingSide />}>
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary-600">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary-700">
           <CheckCircle2 className="h-4 w-4" aria-hidden /> Step 3 of 3 — Final step
         </div>
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
@@ -54,7 +54,7 @@ export default function BrandSetup() {
       </div>
 
       <h1 className="text-2xl font-bold tracking-tight text-slate-900">Tell us about your brand</h1>
-      <p className="mt-2 text-sm text-slate-500">
+      <p className="mt-2 text-sm text-slate-600">
         Help AI understand your business so your product content sounds consistent with your brand.
       </p>
 
@@ -72,7 +72,7 @@ export default function BrandSetup() {
 
 function OnboardingSide() {
   return (
-    <div className="relative flex h-full flex-col justify-center overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-indigo-700 px-16 text-white">
+    <div className="relative flex h-full flex-col justify-center overflow-hidden bg-gradient-to-br from-primary-800 via-primary-700 to-primary-600 px-16 text-white">
       <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/10 blur-2xl" aria-hidden />
       <h2 className="relative max-w-md text-3xl font-bold leading-tight tracking-tight">
         Content that sounds like <em className="not-italic underline decoration-primary-300 underline-offset-8">you</em>, not a robot.

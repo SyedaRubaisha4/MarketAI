@@ -126,9 +126,9 @@ export default function Generate() {
         <div className="flex items-center gap-4 border-b border-slate-100 bg-gradient-to-r from-primary-50 to-white p-5">
           {primary && <img src={primary.url} alt={product.name} className="h-16 w-16 rounded-xl object-cover" />}
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">AI Studio</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">AI Studio</p>
             <h1 className="truncate text-lg font-bold text-slate-900">{product.name}</h1>
-            <p className="text-sm text-slate-500">{product.currency} {product.price.toLocaleString()}</p>
+            <p className="text-sm text-slate-600">{product.currency} {product.price.toLocaleString()}</p>
           </div>
         </div>
 
@@ -143,11 +143,11 @@ export default function Generate() {
                   </span>
                 </div>
                 <h2 className="mt-5 text-xl font-bold text-slate-900">AI is working its magic…</h2>
-                <p className="mt-1.5 text-sm text-slate-500">We're preparing your product's marketing package.</p>
+                <p className="mt-1.5 text-sm text-slate-600">We're preparing your product's marketing package.</p>
               </div>
 
               <div className="mt-8">
-                <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                <div className="flex items-center justify-between text-xs font-medium text-slate-600">
                   <span>{progress}% complete</span>
                   <span>About {secondsLeft} seconds remaining</span>
                 </div>
@@ -163,11 +163,11 @@ export default function Generate() {
                     <li key={task} className={cn(
                       'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition-colors',
                       st === 'active' && 'bg-primary-50 text-primary-800 font-medium',
-                      st === 'done' && 'text-slate-500',
+                      st === 'done' && 'text-slate-600',
                       st === 'pending' && 'text-slate-400',
                     )}>
                       {st === 'done' && <Check className="h-4 w-4 shrink-0 text-green-600" aria-hidden />}
-                      {st === 'active' && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary-600" aria-hidden />}
+                      {st === 'active' && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary-700" aria-hidden />}
                       {st === 'pending' && <Circle className="h-4 w-4 shrink-0 text-slate-300" aria-hidden />}
                       {st === 'failed' && <XCircle className="h-4 w-4 shrink-0 text-red-500" aria-hidden />}
                       {task}
@@ -185,7 +185,7 @@ export default function Generate() {
                 <XCircle className="h-9 w-9" aria-hidden />
               </span>
               <h2 className="mt-5 text-xl font-bold text-slate-900">Generation failed</h2>
-              <p className="mx-auto mt-1.5 max-w-md text-sm text-slate-500">
+              <p className="mx-auto mt-1.5 max-w-md text-sm text-slate-600">
                 We couldn't generate content for {product.name} this time. Your product details are saved — you can retry right away.
               </p>
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
@@ -201,7 +201,7 @@ export default function Generate() {
                 <Check className="h-9 w-9" aria-hidden />
               </span>
               <h2 className="mt-5 text-xl font-bold text-slate-900">Your marketing package is ready!</h2>
-              <p className="mx-auto mt-1.5 max-w-md text-sm text-slate-500">
+              <p className="mx-auto mt-1.5 max-w-md text-sm text-slate-600">
                 Names, descriptions, SEO content, and social captions were generated for {product.name}.
               </p>
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">

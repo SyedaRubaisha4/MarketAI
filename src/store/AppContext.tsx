@@ -76,7 +76,14 @@ function loadPersisted(): PersistedState {
     contents[p.id] = content
   }
   return {
-    user: null,
+    user: {
+      id: 'u-demo',
+      fullName: 'Ahmed Khan',
+      email: 'ahmed@khan-electronics.pk',
+      businessName: 'Khan Electronics',
+      businessType: 'Electronics',
+      onboarded: true,
+    },
     brand,
     products,
     contents,
@@ -89,7 +96,10 @@ function loadPersisted(): PersistedState {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PersistedState>(loadPersisted)
-  const [session, setSession] = useState(() => localStorage.getItem(SESSION_KEY) === '1')
+  const [session, setSession] = useState(() => {
+    const flag = localStorage.getItem(SESSION_KEY)
+    return flag === null ? true : flag === '1'
+  })
   const [toasts, setToasts] = useState<ToastData[]>([])
   const toastId = useRef(0)
 
@@ -134,7 +144,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     logout: () => {
       setSession(false)
-      localStorage.removeItem(SESSION_KEY)
+      localStorage.setItem(SESSION_KEY, '0')
     },
     completeOnboarding: (brand) => {
       setState((s) => ({ ...s, brand: { ...brand, completed: true }, user: s.user ? { ...s.user, onboarded: true } : s.user }))

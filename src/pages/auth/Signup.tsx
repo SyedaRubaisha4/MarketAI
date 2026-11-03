@@ -54,7 +54,7 @@ export default function Signup() {
   return (
     <AuthLayout>
       <h1 className="text-2xl font-bold tracking-tight text-slate-900">Create your account</h1>
-      <p className="mt-2 text-sm text-slate-500">
+      <p className="mt-2 text-sm text-slate-600">
         Start turning products into ready-to-publish marketing content.
       </p>
 
@@ -106,9 +106,9 @@ export default function Signup() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-slate-600">
         Already have an account?{' '}
-        <Link to="/login" className="font-semibold text-primary-600 hover:text-primary-700">Log in</Link>
+        <Link to="/login" className="font-semibold text-primary-700 hover:text-primary-700">Log in</Link>
       </p>
     </AuthLayout>
   )

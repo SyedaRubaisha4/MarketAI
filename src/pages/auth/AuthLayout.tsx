@@ -10,7 +10,7 @@ export function AuthLayout({ children, side }: { children: ReactNode; side?: Rea
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-sm">
             <Zap className="h-5 w-5" aria-hidden />
           </span>
-          <span className="text-xl font-bold tracking-tight text-slate-900">Market<span className="text-primary-600">AI</span></span>
+          <span className="text-xl font-bold tracking-tight text-slate-900">Market<span className="text-primary-700">AI</span></span>
         </Link>
         {children}
       </div>
@@ -23,9 +23,9 @@ export function AuthLayout({ children, side }: { children: ReactNode; side?: Rea
 
 export function AuthSide() {
   return (
-    <div className="relative flex h-full flex-col justify-center overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-indigo-700 px-16 text-white">
+    <div className="relative flex h-full flex-col justify-center overflow-hidden bg-gradient-to-br from-primary-800 via-primary-700 to-primary-600 px-16 text-white">
       <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/10 blur-2xl" aria-hidden />
-      <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-indigo-400/20 blur-2xl" aria-hidden />
+      <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-primary-300/30 blur-2xl" aria-hidden />
       <div className="relative max-w-lg">
         <h2 className="text-3xl font-bold leading-tight tracking-tight">
           Turn any product into a complete marketing package in 60 seconds.

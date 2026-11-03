@@ -10,10 +10,10 @@ export function TrialEndingPage() {
   const daysLeft = Math.max(1, Math.ceil((new Date(subscription.trialEndsAt).getTime() - Date.now()) / 86400000));
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-[#f2ebdc]">
       <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
         <Logo />
-        <Link to="/dashboard" className="text-sm font-medium text-slate-500 hover:text-slate-700">Back to dashboard</Link>
+        <Link to="/dashboard" className="text-sm font-medium text-slate-600 hover:text-slate-700">Back to dashboard</Link>
       </header>
       <main className="flex flex-1 items-center justify-center px-6 py-16">
         <div className="w-full max-w-lg text-center">
@@ -21,7 +21,7 @@ export function TrialEndingPage() {
             <AlertTriangle className="h-8 w-8" aria-hidden />
           </div>
           <h1 className="mt-6 text-3xl font-bold tracking-tight text-slate-900">Your trial ends in {daysLeft} day{daysLeft === 1 ? '' : 's'}</h1>
-          <p className="mx-auto mt-3 max-w-md text-slate-500">
+          <p className="mx-auto mt-3 max-w-md text-slate-600">
             Keep your AI marketing running without interruption. Upgrade before{' '}
             <span className="font-medium text-slate-700">{new Date(subscription.trialEndsAt).toLocaleDateString()}</span>{' '}
             to keep generating and publishing content.

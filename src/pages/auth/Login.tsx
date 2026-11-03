@@ -32,7 +32,7 @@ export default function Login() {
   return (
     <AuthLayout>
       <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back</h1>
-      <p className="mt-2 text-sm text-slate-500">Log in to your workspace to continue creating content.</p>
+      <p className="mt-2 text-sm text-slate-600">Log in to your workspace to continue creating content.</p>
 
       <form onSubmit={submit} noValidate className="mt-8 space-y-5">
         <Input label="Email Address" type="email" placeholder="you@business.com" value={email} onChange={(e) => { setEmail(e.target.value); setErrors((er) => ({ ...er, email: undefined })) }} error={errors.email} required autoComplete="email" />
@@ -61,9 +61,9 @@ export default function Login() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">
+      <p className="mt-6 text-center text-sm text-slate-600">
         Don't have an account?{' '}
-        <Link to="/signup" className="font-semibold text-primary-600 hover:text-primary-700">Sign up</Link>
+        <Link to="/signup" className="font-semibold text-primary-700 hover:text-primary-700">Sign up</Link>
       </p>
     </AuthLayout>
   )

@@ -38,7 +38,7 @@ export function BrandSettings() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-slate-900">Brand Profile</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-600">
             This information shapes every description, caption, and headline the AI generates.
           </p>
         </div>

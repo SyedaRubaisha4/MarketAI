@@ -77,10 +77,10 @@ export default function CalendarPage() {
       <div className="card p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1">
-            <button onClick={() => shiftMonth(-1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50" aria-label="Previous month">
+            <button onClick={() => shiftMonth(-1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50" aria-label="Previous month">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <button onClick={() => shiftMonth(1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50" aria-label="Next month">
+            <button onClick={() => shiftMonth(1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50" aria-label="Next month">
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
@@ -154,7 +154,7 @@ export default function CalendarPage() {
                 <PlatformIcon platform={post.platform} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900">{post.title}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-xs text-slate-600">
                     {PLATFORM_META[post.platform].name} · {post.time}
                     {products.find((p) => p.id === post.productId)?.name ? ` · ${products.find((p) => p.id === post.productId)!.name}` : ''}
                   </p>
@@ -162,7 +162,7 @@ export default function CalendarPage() {
                 {post.imageUrl && <img src={post.imageUrl} alt="" className="hidden h-12 w-12 rounded-lg object-cover sm:block" />}
                 <div className="flex shrink-0 items-center gap-1">
                   <IconBtn label="Post now" onClick={() => postNow(post)} className="hover:bg-green-50 hover:text-green-600" icon={Send} />
-                  <IconBtn label={`Edit ${post.title}`} onClick={() => setEditing(post)} className="hover:bg-primary-50 hover:text-primary-600" icon={Pencil} />
+                  <IconBtn label={`Edit ${post.title}`} onClick={() => setEditing(post)} className="hover:bg-primary-50 hover:text-primary-700" icon={Pencil} />
                   <IconBtn label={`Delete ${post.title}`} onClick={() => setDeleteTarget(post)} className="hover:bg-red-50 hover:text-red-600" icon={Trash2} />
                 </div>
               </li>
@@ -204,7 +204,7 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
       aria-pressed={active}
       className={cn(
         'shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-        active ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700',
+        active ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-700',
       )}
     >
       {children}
@@ -293,7 +293,7 @@ function ScheduleModal({ onClose, existing }: { onClose: () => void; existing?: 
         <div className="space-y-1.5">
           <span className="block text-sm font-medium text-slate-700">Platform</span>
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Platform">
-            {connected.length === 0 && <p className="text-sm text-slate-500">No connected accounts — connect one in <ButtonLink to="/social-accounts" size="sm" variant="outline">Social Accounts</ButtonLink>.</p>}
+            {connected.length === 0 && <p className="text-sm text-slate-600">No connected accounts — connect one in <ButtonLink to="/social-accounts" size="sm" variant="outline">Social Accounts</ButtonLink>.</p>}
             {connected.map((a) => (
               <button
                 key={a.platform}

@@ -23,7 +23,7 @@ export function FieldShell({ label, error, hint, required, children, className }
       {error
         ? <p className="text-sm text-red-600" role="alert">{error}</p>
         : hint
-          ? <p className="text-sm text-slate-500">{hint}</p>
+          ? <p className="text-sm text-slate-600">{hint}</p>
           : null}
     </div>
   )

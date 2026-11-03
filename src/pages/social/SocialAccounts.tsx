@@ -20,14 +20,14 @@ function ConnectedCard({ account, onDisconnect }: { account: SocialAccount; onDi
           <PlatformIcon platform={account.platform} className="h-11 w-11 rounded-xl" />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-900">{meta.name}</p>
-            <p className="mt-0.5 truncate text-xs text-slate-500">{account.accountName}</p>
+            <p className="mt-0.5 truncate text-xs text-slate-600">{account.accountName}</p>
           </div>
         </div>
         <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
           <CheckCircle2 className="h-3 w-3" /> Connected
         </span>
       </div>
-      <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+      <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
         Demo connection only — no real account is linked. Publishing from this app is simulated.
       </p>
       <div className="mt-4">
@@ -96,7 +96,7 @@ function ConnectModal({
           <PlatformIcon platform={platform} className="mx-auto h-14 w-14 rounded-2xl" iconClassName="h-6 w-6" />
           <div>
             <p className="text-sm font-semibold text-slate-900">Authorize MarketAI (demo)</p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">
               MarketAI is requesting permission to publish on your behalf. This step only simulates the authorization
               flow — nothing is sent anywhere.
             </p>
@@ -180,7 +180,7 @@ export function SocialAccountsPage() {
                     <PlatformIcon platform={p} className="h-11 w-11 rounded-xl" />
                     <div>
                       <p className="text-sm font-semibold text-slate-900">{meta.name}</p>
-                      <p className="text-xs text-slate-500">Not connected</p>
+                      <p className="text-xs text-slate-600">Not connected</p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => setConnecting(p)} disabled={busy}>
@@ -193,9 +193,9 @@ export function SocialAccountsPage() {
         </div>
       )}
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-600">
         Connection and publishing flows in this prototype are simulated.{' '}
-        <Link to="/settings" className="font-medium text-primary-600 hover:text-primary-700">
+        <Link to="/settings" className="font-medium text-primary-700 hover:text-primary-700">
           Manage other settings
         </Link>
       </p>

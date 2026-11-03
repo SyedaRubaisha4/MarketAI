@@ -29,7 +29,7 @@ export default function AiStudio() {
           <section>
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">Ready for Review</h2>
             {withContent.length === 0 ? (
-              <div className="card p-6 text-sm text-slate-500">
+              <div className="card p-6 text-sm text-slate-600">
                 Nothing generated yet — pick a product below and generate its first marketing package.
               </div>
             ) : (
@@ -43,7 +43,7 @@ export default function AiStudio() {
                       <ProductThumb product={p} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-slate-900">{p.name}</p>
-                        <p className="text-xs text-slate-500">{approved} of {total} sections approved</p>
+                        <p className="text-xs text-slate-600">{approved} of {total} sections approved</p>
                       </div>
                       <div className="hidden sm:block"><StatusBadge status={p.status} /></div>
                       <button
@@ -67,11 +67,11 @@ export default function AiStudio() {
                   <ProductThumb product={p} className="h-14 w-14 shrink-0 rounded-xl object-cover" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-slate-900">{p.name}</p>
-                    <p className="text-xs text-slate-500">{p.currency} {p.price.toLocaleString()}</p>
+                    <p className="text-xs text-slate-600">{p.currency} {p.price.toLocaleString()}</p>
                   </div>
                   <button
                     onClick={() => navigate(p.status === 'generating' ? `/products/${p.id}/generate` : `/products/${p.id}/generate`)}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 hover:bg-primary-100"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700 hover:bg-primary-100"
                     aria-label={`Generate content for ${p.name}`}
                     title="Generate content"
                   >

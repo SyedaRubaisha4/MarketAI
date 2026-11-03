@@ -67,7 +67,7 @@ export function TagInput({ label, placeholder = 'Type and press Enter', tags, on
           ))}
         </div>
       )}
-      {hint && <p className="text-sm text-slate-500">{hint}</p>}
+      {hint && <p className="text-sm text-slate-600">{hint}</p>}
     </div>
   )
 }

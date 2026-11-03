@@ -41,14 +41,14 @@ function RecentRow({ product }: { product: Product }) {
     : 'Generate'
 
   return (
-    <li className="flex items-center gap-4 px-4 py-3.5 sm:px-5">
-      <ProductThumb product={product} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+    <li className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-primary-50/40 sm:gap-4 sm:px-5">
+      <ProductThumb product={product} className="h-11 w-11 shrink-0 rounded-xl object-cover sm:h-12 sm:w-12" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
-        <p className="text-xs text-slate-500">{product.currency} {product.price.toLocaleString()} · Updated {fmtDate(product.updatedAt)}</p>
+        <p className="mt-0.5 truncate text-xs text-slate-600">{product.currency} {product.price.toLocaleString()} · Updated {fmtDate(product.updatedAt)}</p>
       </div>
-      <div className="hidden sm:block"><StatusBadge status={product.status} /></div>
-      <div className="flex items-center gap-1.5">
+      <div className="hidden shrink-0 sm:block"><StatusBadge status={product.status} /></div>
+      <div className="flex shrink-0 items-center gap-1.5">
         <Link
           to={`/products/${product.id}`}
           className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 md:inline-flex"
@@ -67,7 +67,7 @@ function RecentRow({ product }: { product: Product }) {
         </Link>
         <button
           onClick={action}
-          className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-primary-700 hover:bg-primary-50"
+          className="inline-flex h-8 items-center gap-1 rounded-lg border border-primary-200 bg-white px-3 text-xs font-semibold text-primary-700 shadow-sm transition-colors hover:bg-primary-50"
         >
           {actionLabel}
         </button>
@@ -95,16 +95,18 @@ export default function Dashboard() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back, {firstName}!</h1>
-          <p className="mt-1 text-sm text-slate-500">Here's what's happening with your product content and marketing.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Welcome back, {firstName}!</h1>
+          <p className="mt-1.5 text-sm text-slate-600">Here's what's happening with your product content and marketing.</p>
         </div>
-        <ButtonLink to="/products/new" size="lg"><Plus className="h-4 w-4" aria-hidden /> Add Product</ButtonLink>
+        <ButtonLink to="/products/new" size="lg" className="shadow-md shadow-primary-600/20 sm:shrink-0">
+          <Plus className="h-4 w-4" aria-hidden /> Add Product
+        </ButtonLink>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
         <StatCard label="Total Products" value={products.length} icon={Package} />
         <StatCard label="Generated" value={generated} icon={FileCheck2} />
         <StatCard label="Published" value={published} icon={Send} />
@@ -113,28 +115,32 @@ export default function Dashboard() {
         <StatCard label="Scheduled" value={scheduled} icon={CalendarClock} />
       </div>
 
-      <div>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">Quick Actions</h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section>
+        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Quick Actions</h2>
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {quickActions.map(({ icon: Icon, label, desc, to, cta }) => (
-            <Link key={label} to={to} className="card group p-5 transition-shadow hover:shadow-card-lg">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600 transition-colors group-hover:bg-primary-100">
+            <Link
+              key={label}
+              to={to}
+              className="group rounded-2xl border border-white/70 bg-white p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-lg"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-100/70 text-primary-700 transition-colors group-hover:bg-primary-200/70">
                 <Icon className="h-5 w-5" aria-hidden />
               </span>
-              <p className="mt-4 font-semibold text-slate-900">{label}</p>
-              <p className="mt-1 text-sm text-slate-500 line-clamp-2">{desc}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary-600">
-                {cta} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              <p className="mt-4 text-[15px] font-semibold text-slate-900">{label}</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600 line-clamp-2">{desc}</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary-700">
+                {cta} <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
               </span>
             </Link>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div>
+      <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">Recent Products</h2>
-          <Link to="/products" className="text-sm font-semibold text-primary-600 hover:text-primary-700">View All</Link>
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Recent Products</h2>
+          <Link to="/products" className="text-sm font-semibold text-primary-700 hover:text-primary-700">View All</Link>
         </div>
         {recent.length === 0 ? (
           <EmptyState
@@ -144,11 +150,11 @@ export default function Dashboard() {
             action={<ButtonLink to="/products/new"><Plus className="h-4 w-4" aria-hidden /> Add Product</ButtonLink>}
           />
         ) : (
-          <ul className="card divide-y divide-slate-100">
+          <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-white/70 bg-white shadow-card">
             {recent.map((p) => <RecentRow key={p.id} product={p} />)}
           </ul>
         )}
-      </div>
+      </section>
 
       <p className="flex items-center justify-center gap-1.5 pb-2 text-center text-xs text-slate-400">
         <RefreshCw className="h-3 w-3" aria-hidden />

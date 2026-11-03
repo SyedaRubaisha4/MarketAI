@@ -50,7 +50,7 @@ export function SubscriptionSettings() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-slate-900">Current Plan</h2>
-            <p className="mt-1 text-sm text-slate-500">Your subscription and trial status.</p>
+            <p className="mt-1 text-sm text-slate-600">Your subscription and trial status.</p>
           </div>
           <span
             className={cn(
@@ -74,7 +74,7 @@ export function SubscriptionSettings() {
 
         {subscription.plan === 'trial' && (
           <div className="mt-5">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+            <div className="flex items-center justify-between text-xs font-medium text-slate-600">
               <span>Day {daysUsed} of {TRIAL_DAYS}</span>
               <span>{100 - trialPct}% remaining</span>
             </div>
@@ -87,7 +87,7 @@ export function SubscriptionSettings() {
                 style={{ width: `${trialPct}%` }}
               />
             </div>
-            <p className="mt-3 text-sm text-slate-500">
+            <p className="mt-3 text-sm text-slate-600">
               Trial started {new Date(subscription.trialStartedAt).toLocaleDateString()} · ends{' '}
               {new Date(subscription.trialEndsAt).toLocaleDateString()}.
             </p>
@@ -98,9 +98,9 @@ export function SubscriptionSettings() {
       <div>
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold text-slate-900">Plans</h2>
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500">Sample pricing</span>
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">Sample pricing</span>
         </div>
-        <p className="mt-1 text-sm text-slate-500">Prices below are sample data for this prototype — no real billing exists.</p>
+        <p className="mt-1 text-sm text-slate-600">Prices below are sample data for this prototype — no real billing exists.</p>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           {(['starter', 'pro'] as const).map((plan) => {
@@ -119,12 +119,12 @@ export function SubscriptionSettings() {
                   </span>
                 )}
                 <div className="flex items-center gap-2">
-                  {plan === 'pro' ? <Crown className="h-5 w-5 text-primary-600" /> : <Rocket className="h-5 w-5 text-primary-600" />}
+                  {plan === 'pro' ? <Crown className="h-5 w-5 text-primary-700" /> : <Rocket className="h-5 w-5 text-primary-700" />}
                   <h3 className="text-base font-semibold capitalize text-slate-900">{plan}</h3>
                 </div>
                 <p className="mt-2">
                   <span className="text-3xl font-bold text-slate-900">Rs {plan === 'pro' ? '4,999' : '1,999'}</span>
-                  <span className="text-sm text-slate-500"> / month (sample)</span>
+                  <span className="text-sm text-slate-600"> / month (sample)</span>
                 </p>
                 <ul className="mt-4 space-y-2">
                   {PLAN_FEATURES[plan].map((f) => (

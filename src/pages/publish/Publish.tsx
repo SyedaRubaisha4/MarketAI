@@ -127,7 +127,7 @@ export default function Publish() {
 
   return (
     <div className="space-y-6">
-      <Link to={`/products/${product.id}/review`} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800">
+      <Link to={`/products/${product.id}/review`} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-800">
         <ArrowLeft className="h-4 w-4" aria-hidden /> Back to Review
       </Link>
 
@@ -136,7 +136,7 @@ export default function Publish() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-green-600">Content Approved</p>
           <h1 className="text-xl font-bold text-slate-900">{product.name}</h1>
-          <p className="text-sm text-slate-500">Where would you like to publish your content?</p>
+          <p className="text-sm text-slate-600">Where would you like to publish your content?</p>
         </div>
       </div>
 
@@ -174,7 +174,7 @@ export default function Publish() {
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-900">{PLATFORM_META[p].name}</p>
                       {account.connected ? (
-                        <p className="mt-0.5 truncate text-xs text-slate-500">
+                        <p className="mt-0.5 truncate text-xs text-slate-600">
                           {PLATFORM_META[p].handlePrefix}{account.identifier}
                         </p>
                       ) : (
@@ -216,12 +216,12 @@ export default function Publish() {
                     mode === value ? 'border-primary-500 bg-primary-50/60' : 'border-slate-200 hover:border-primary-300',
                   )}
                 >
-                  <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', mode === value ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-500')}>
+                  <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', mode === value ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600')}>
                     <Icon className="h-4 w-4" aria-hidden />
                   </span>
                   <span>
                     <span className="block text-sm font-semibold text-slate-900">{title}</span>
-                    <span className="mt-0.5 block text-xs text-slate-500">{desc}</span>
+                    <span className="mt-0.5 block text-xs text-slate-600">{desc}</span>
                   </span>
                 </button>
               ))}
@@ -265,7 +265,7 @@ export default function Publish() {
                       role="tab"
                       aria-selected={effectivePreview === p}
                       onClick={() => setPreviewPlatform(p)}
-                      className={cn('rounded-md px-2.5 py-1 text-xs font-semibold', effectivePreview === p ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700')}
+                      className={cn('rounded-md px-2.5 py-1 text-xs font-semibold', effectivePreview === p ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-600 hover:text-slate-700')}
                     >
                       {PLATFORM_META[p].name.split(' ')[0]}
                     </button>
@@ -286,7 +286,7 @@ export default function Publish() {
                 </div>
                 <p className="whitespace-pre-line px-4 py-3 text-sm leading-relaxed text-slate-700">{captionFor(effectivePreview, content)}</p>
                 {effectivePreview === 'instagram' && (
-                  <p className="px-4 pb-2 text-sm text-primary-600">{content.instagram.hashtags.join(' ')}</p>
+                  <p className="px-4 pb-2 text-sm text-primary-700">{content.instagram.hashtags.join(' ')}</p>
                 )}
                 {primary && <img src={primary.url} alt="" className="max-h-72 w-full object-cover" />}
                 <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2.5 text-xs text-slate-400">
