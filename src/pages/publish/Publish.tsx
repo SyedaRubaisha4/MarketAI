@@ -11,12 +11,13 @@ import type { Platform } from '../../types'
 
 const PLATFORMS: Platform[] = ['instagram', 'facebook', 'whatsapp', 'tiktok', 'pinterest', 'linkedin']
 
-function captionFor(platform: Platform, content: NonNullable<ReturnType<typeof useApp>['contents'][string]>): string {
+function captionFor(platform: Platform, content: any): string {
+  if (!content) return ''
   switch (platform) {
-    case 'instagram': return content.instagram.caption
-    case 'facebook': return content.facebook.caption
-    case 'whatsapp': return content.whatsapp.message
-    default: return content.shortDescription
+    case 'instagram': return content.instagram?.caption || ''
+    case 'facebook': return content.facebook?.caption || ''
+    case 'whatsapp': return content.whatsapp?.message || ''
+    default: return content.shortDescription || ''
   }
 }
 
@@ -39,7 +40,7 @@ export default function Publish() {
   const [busy, setBusy] = useState(false)
 
   const connectedAccounts = useMemo(
-    () => socialAccounts.filter((a) => a.connected && selected.includes(a.platform)),
+    () => (socialAccounts || []).filter((a) => a.connected && selected.includes(a.platform)),
     [socialAccounts, selected],
   )
 
@@ -54,8 +55,8 @@ export default function Publish() {
     )
   }
 
-  const primary = product.images.find((i) => i.isPrimary) ?? product.images[0]
-  const approvedPlatforms = selected.filter((p) => socialAccounts.find((a) => a.platform === p)?.connected)
+  const primary = product.images?.find((i) => i.isPrimary) ?? product.images?.[0]
+  const approvedPlatforms = selected.filter((p) => (socialAccounts || []).find((a) => a.platform === p)?.connected)
   const effectivePreview = previewPlatform && selected.includes(previewPlatform) ? previewPlatform : approvedPlatforms[0]
 
   const toggle = (p: Platform) => {
@@ -94,10 +95,9 @@ export default function Publish() {
             imageUrl: primary?.url ?? null,
           })
         })
-        // mark the just-created posts as published
         setProductStatus(product.id, 'published')
         toast('Content published (simulated)', {
-          description: `Posted to ${approvedPlatforms.map((p) => PLATFORM_META[p].name).join(', ')}. No real network was contacted.`,
+          description: `Posted to ${approvedPlatforms.map((p) => PLATFORM_META[p]?.name || p).join(', ')}. No real network was contacted.`,
         })
         addNotification('Post published', `${product.name} was published to ${approvedPlatforms.length} platform(s).`)
         setBusy(false)
@@ -106,7 +106,7 @@ export default function Publish() {
         approvedPlatforms.forEach((platform) => {
           schedulePost({
             productId: product.id, platform, date: date, time: time,
-            title: `${product.name} — ${PLATFORM_META[platform].name} Post`, imageUrl: primary?.url ?? null,
+            title: `${product.name} — ${PLATFORM_META[platform]?.name || platform} Post`, imageUrl: primary?.url ?? null,
           })
         })
         setProductStatus(product.id, 'scheduled')
@@ -146,9 +146,11 @@ export default function Publish() {
             <h2 className="text-sm font-semibold text-slate-900">Choose Platforms</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {PLATFORMS.map((p) => {
-                const account = socialAccounts.find((a) => a.platform === p)!
+                const account = socialAccounts?.find((a) => a.platform === p) || { connected: false, identifier: '', accountName: '' }
                 const isSelected = selected.includes(p)
                 const disabled = !account.connected
+                const meta = PLATFORM_META[p] || { name: p, handlePrefix: '' }
+                
                 return (
                   <button
                     key={p}
@@ -172,10 +174,10 @@ export default function Publish() {
                     )}
                     <PlatformIcon platform={p} />
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-900">{PLATFORM_META[p].name}</p>
+                      <p className="text-sm font-semibold text-slate-900">{meta.name}</p>
                       {account.connected ? (
                         <p className="mt-0.5 truncate text-xs text-slate-600">
-                          {PLATFORM_META[p].handlePrefix}{account.identifier}
+                          {meta.handlePrefix}{account.identifier}
                         </p>
                       ) : (
                         <p className="mt-0.5 text-xs text-slate-400">Not connected</p>
@@ -267,7 +269,7 @@ export default function Publish() {
                       onClick={() => setPreviewPlatform(p)}
                       className={cn('rounded-md px-2.5 py-1 text-xs font-semibold', effectivePreview === p ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-600 hover:text-slate-700')}
                     >
-                      {PLATFORM_META[p].name.split(' ')[0]}
+                      {(PLATFORM_META[p]?.name || p).split(' ')[0]}
                     </button>
                   ))}
                 </div>
@@ -278,20 +280,20 @@ export default function Publish() {
                 <div className="flex items-center gap-2.5 border-b border-slate-100 bg-slate-50 px-4 py-2.5">
                   <PlatformIcon platform={effectivePreview} className="h-8 w-8 rounded-full" />
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">{socialAccounts.find((a) => a.platform === effectivePreview)?.accountName ?? PLATFORM_META[effectivePreview].name}</p>
+                    <p className="text-sm font-semibold text-slate-800">{socialAccounts?.find((a) => a.platform === effectivePreview)?.accountName ?? (PLATFORM_META[effectivePreview]?.name || effectivePreview)}</p>
                     <p className="text-xs text-slate-400">
                       {mode === 'now' ? 'Posting now' : `Scheduled · ${date || '…'} ${time || ''}`}
                     </p>
                   </div>
                 </div>
                 <p className="whitespace-pre-line px-4 py-3 text-sm leading-relaxed text-slate-700">{captionFor(effectivePreview, content)}</p>
-                {effectivePreview === 'instagram' && (
+                {effectivePreview === 'instagram' && content.instagram?.hashtags && (
                   <p className="px-4 pb-2 text-sm text-primary-700">{content.instagram.hashtags.join(' ')}</p>
                 )}
                 {primary && <img src={primary.url} alt="" className="max-h-72 w-full object-cover" />}
                 <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2.5 text-xs text-slate-400">
                   <span>{product.name}</span>
-                  <span className="font-semibold text-slate-700">{product.currency} {product.price.toLocaleString()}</span>
+                  <span className="font-semibold text-slate-700">{product.currency} {product.price?.toLocaleString()}</span>
                 </div>
               </div>
             ) : (

@@ -56,7 +56,7 @@ export function seedProducts(): Product[] {
         { key: 'Color', value: 'Black' }, { key: 'Battery', value: '30 hours' },
         { key: 'Bluetooth', value: '5.3' }, { key: 'Waterproof', value: 'IPX5' },
       ],
-      images: [{ id: 'img-e1', url: '/images/earbuds.png', isPrimary: true }],
+      images: [{ id: 'img-e1', url: 'https://source.unsplash.com/800x800/?earbuds,electronics', isPrimary: true }],
       status: 'published', createdAt: iso(now - 9 * day), updatedAt: iso(now - 2 * day),
     },
     {
@@ -65,7 +65,7 @@ export function seedProducts(): Product[] {
         { key: 'Wattage', value: '9W' }, { key: 'Brightness', value: '806 lm' },
         { key: 'Control', value: 'App + Voice' }, { key: 'Lifespan', value: '25,000 hours' },
       ],
-      images: [{ id: 'img-b1', url: '/images/led-bulb.png', isPrimary: true }],
+      images: [{ id: 'img-b1', url: 'https://source.unsplash.com/800x800/?led,bulb', isPrimary: true }],
       status: 'scheduled', createdAt: iso(now - 8 * day), updatedAt: iso(now - 3 * day),
     },
     {
@@ -74,7 +74,7 @@ export function seedProducts(): Product[] {
         { key: 'Length', value: '2 meters' }, { key: 'Material', value: 'Nylon braided' },
         { key: 'Charging', value: '60W fast charge' }, { key: 'Data', value: '480 Mbps' },
       ],
-      images: [{ id: 'img-c1', url: '/images/usb-cable.png', isPrimary: true }],
+      images: [{ id: 'img-c1', url: 'https://source.unsplash.com/800x800/?usb,cable', isPrimary: true }],
       status: 'needs_review', createdAt: iso(now - 6 * day), updatedAt: iso(now - 1 * day),
     },
     {
@@ -83,7 +83,7 @@ export function seedProducts(): Product[] {
         { key: 'Material', value: '100% combed cotton' }, { key: 'Fit', value: 'Regular' },
         { key: 'Sizes', value: 'S – XXL' }, { key: 'GSM', value: '180' },
       ],
-      images: [{ id: 'img-t1', url: '/images/tshirt.png', isPrimary: true }],
+      images: [{ id: 'img-t1', url: 'https://source.unsplash.com/800x800/?tshirt,fashion', isPrimary: true }],
       status: 'content_ready', createdAt: iso(now - 5 * day), updatedAt: iso(now - 4 * day),
     },
     {
@@ -92,7 +92,7 @@ export function seedProducts(): Product[] {
         { key: 'Capacity', value: '350 ml' }, { key: 'Material', value: 'Stoneware ceramic' },
         { key: 'Dishwasher safe', value: 'Yes' }, { key: 'Colors', value: 'Cream, White' },
       ],
-      images: [{ id: 'img-m1', url: '/images/mug.png', isPrimary: true }],
+      images: [{ id: 'img-m1', url: 'https://source.unsplash.com/800x800/?coffee,mug', isPrimary: true }],
       status: 'draft', createdAt: iso(now - 4 * day), updatedAt: iso(now - 4 * day),
     },
     {
@@ -101,7 +101,7 @@ export function seedProducts(): Product[] {
         { key: 'Battery', value: '20 hours' }, { key: 'Bluetooth', value: '5.0' },
         { key: 'Waterproof', value: 'IPX4' },
       ],
-      images: [{ id: 'img-n1', url: '/images/earbuds.png', isPrimary: true }],
+      images: [{ id: 'img-n1', url: 'https://source.unsplash.com/800x800/?earphones', isPrimary: true }],
       status: 'approved', createdAt: iso(now - 3 * day), updatedAt: iso(now - 2 * day),
     },
     {
@@ -109,38 +109,50 @@ export function seedProducts(): Product[] {
       details: [
         { key: 'Length', value: '5 meters' }, { key: 'Modes', value: '16 colors + music sync' },
       ],
-      images: [{ id: 'img-l1', url: '/images/led-bulb.png', isPrimary: true }],
+      images: [{ id: 'img-l1', url: 'https://source.unsplash.com/800x800/?led,strip', isPrimary: true }],
       status: 'draft', createdAt: iso(now - 2 * day), updatedAt: iso(now - 2 * day),
     },
     {
       id: 'p-cable2', name: 'Braided Lightning Cable', category: 'Phones & Tablets', price: 699, currency: 'Rs',
       details: [{ key: 'Length', value: '1.5 meters' }, { key: 'Certified', value: 'MFi' }],
-      images: [{ id: 'img-cl1', url: '/images/usb-cable.png', isPrimary: true }],
+      images: [{ id: 'img-cl1', url: 'https://source.unsplash.com/800x800/?lightning,cable', isPrimary: true }],
       status: 'published', createdAt: iso(now - 12 * day), updatedAt: iso(now - 7 * day),
     },
   ]
 }
 
-export function buildMockContent(product: Product, brand: BrandProfile, variant = 0): GeneratedContent {
-  const tone = brand.tones[0] ?? 'Friendly'
-  const kw = brand.keywords.length ? brand.keywords : ['quality']
-  const business = brand.businessName || 'our store'
-  const primary = product.images.find((i) => i.isPrimary)?.url ?? null
-  const v = variant % 2
+export function buildMockContent(product: Product, brand: BrandProfile | null, variant = 0): GeneratedContent {
+  const safeBrand = brand || {} as BrandProfile;
+  
+  const tone = safeBrand.tones ? safeBrand.tones.join(', ') : 'Friendly';
+  const kw = safeBrand.keywords ? safeBrand.keywords : ['quality', 'trusted'];
+  const business = safeBrand.businessName || 'our store';
+  const targetCustomers = safeBrand.targetCustomers || 'everyone';
+  const brandKeywords = safeBrand.keywords || ['quality', 'trusted'];
 
-  const nameIdeas = v === 0
+  const productDetails = (product.details || []).map(d => ({
+    key: d.key || '',
+    value: d.value || ''
+  }));
+  
+  const v = variant % 2;
+
+  const categoryKeyword = product.category ? product.category.toLowerCase().replace(/\s+/g, ',') : 'product';
+  const productKeyword = product.name ? product.name.toLowerCase().replace(/\s+/g, ',') : 'item';
+const uploadedImageUrl = product.images?.find((i) => i.isPrimary)?.url || product.images?.[0]?.url || null;
+const nameIdeas = v === 0
     ? [`${product.name} — ${kw[0] ?? 'Pro'} Edition`, `${product.name} | Best at ${business}`, `${product.name} (Top Rated)`]
-    : [`${product.name} — Customer Favorite`, `Premium ${product.name}`, `${product.name} • ${kw[1] ?? 'New'} Pick`]
+    : [`${product.name} — Customer Favorite`, `Premium ${product.name}`, `${product.name} • ${kw[1] ?? 'New'} Pick`];
 
   const shortDescription = v === 0
-    ? `Meet the ${product.name} — ${product.details.map((d) => `${d.key.toLowerCase()}: ${d.value.toLowerCase()}`).join(', ')}. A ${tone.toLowerCase()} choice for ${brand.targetCustomers || 'everyone'}, brought to you by ${business}.`
-    : `The ${product.name} delivers everyday value at just ${product.currency} ${product.price.toLocaleString()}. Trusted by customers of ${business} for its ${kw.slice(0, 2).join(' and ')}.`
+    ? `Meet the ${product.name}.`
+    : `The ${product.name} delivers everyday value.`;
 
   const fullDescription = v === 0
-    ? `The ${product.name} is designed for people who want dependable quality without the premium price tag. Every unit is checked by ${business} before dispatch, so what arrives at your door is exactly what you saw online.\n\nWhether you're buying for yourself or as a gift, the ${product.name} fits right in — ${product.details.map((d) => `${d.key.toLowerCase()}: ${d.value.toLowerCase()}`).join('; ')}.`
-    : `Looking for a product that simply works? The ${product.name} has become one of our most reordered items at ${business}. Customers tell us they love how it balances quality and price.\n\nOrder today and get it delivered fast, with easy returns if it is not the right fit.`
+    ? `The ${product.name} is designed for people who want dependable quality.`
+    : `Looking for a product that simply works? The ${product.name} is great.`;
 
-  const features = product.details.map((d) => `${d.key}: ${d.value}`)
+  const features = productDetails.map((d) => `${d.key}: ${d.value}`);
 
   return {
     productId: product.id,
@@ -153,24 +165,29 @@ export function buildMockContent(product: Product, brand: BrandProfile, variant 
     seo: {
       title: `${product.name} — Buy Online at ${business} | ${product.currency} ${product.price.toLocaleString()}`.slice(0, 70),
       metaDescription: `Shop ${product.name} at ${product.currency} ${product.price.toLocaleString()}. ${kw.slice(0, 3).join(', ')} — order online from ${business} with fast delivery.`.slice(0, 160),
-      keywords: [product.name.toLowerCase(), product.category.toLowerCase(), 'buy online', ...brand.keywords].slice(0, 10),
+      keywords: [
+        (product.name || '').toLowerCase(), 
+        (product.category || 'general').toLowerCase(), 
+        'buy online', 
+        ...brandKeywords
+      ].slice(0, 10),
     },
     instagram: {
       caption: v === 0
-        ? `New arrival alert 🎉 The ${product.name} is here — only ${product.currency} ${product.price.toLocaleString()}! ${kw.slice(0, 2).map((k) => k[0].toUpperCase() + k.slice(1)).join(' and ')} quality you can trust from ${business}. Tap the link in bio to order today!`
-        : `You asked, we delivered ✨ ${product.name} restocked at ${business}. Perfect for ${brand.targetCustomers || 'your everyday'}. DM us to order — ${product.currency} ${product.price.toLocaleString()} only!`,
-      hashtags: ['#ShopNow', `#${product.category.replace(/\s/g, '')}`, '#OnlineShopping', '#PakistanFashion', '#Deals', '#NewArrival'].slice(0, 6),
+        ? `New arrival alert  The ${product.name} is here — only ${product.currency} ${product.price.toLocaleString()}! ${kw.slice(0, 2).map((k) => k[0].toUpperCase() + k.slice(1)).join(' and ')} quality you can trust from ${business}. Tap the link in bio to order today!`
+        : `You asked, we delivered  ${product.name} restocked at ${business}. Perfect for ${targetCustomers}. DM us to order — ${product.currency} ${product.price.toLocaleString()} only!`,
+      hashtags: ['#ShopNow', `#${(product.category || 'general').replace(/\s/g, '')}`, '#OnlineShopping', '#PakistanFashion', '#Deals', '#NewArrival'].slice(0, 6),
     },
     facebook: {
       caption: v === 0
-        ? `🔥 NOW AVAILABLE: ${product.name}\n\nPrice: ${product.currency} ${product.price.toLocaleString()}\n\n${features.join('\n')}\n\nWhy buy from ${business}? ${kw.slice(0, 3).map((k) => k[0].toUpperCase() + k.slice(1)).join(', ')} — every single time.\n\n📦 Cash on delivery available nationwide\n📩 Message us to place your order!`
-        : `✅ ${product.name} — back in stock!\n\n${shortDescription}\n\nOrder now: ${product.currency} ${product.price.toLocaleString()}\nInbox us or call to order. Limited stock!`,
+        ? ` NOW AVAILABLE: ${product.name}\n\nPrice: ${product.currency} ${product.price.toLocaleString()}\n\n${features.join('\n')}\n\nWhy buy from ${business}? ${kw.slice(0, 3).map((k) => k[0].toUpperCase() + k.slice(1)).join(', ')} — every single time.\n\n Cash on delivery available nationwide\n Message us to place your order!`
+        : ` ${product.name} — back in stock!\n\n${shortDescription}\n\nOrder now: ${product.currency} ${product.price.toLocaleString()}\nInbox us or call to order. Limited stock!`,
       hashtags: ['#SmallBusiness', '#ShopLocal', '#Ecommerce'],
     },
     whatsapp: {
       message: `*${product.name}*\n_${business}_\n\nPrice: *${product.currency} ${product.price.toLocaleString()}*\n\n${features.join('\n')}\n\nReply *ORDER* to book yours. Cash on delivery available!`,
     },
-    imageUrl: primary,
+imageUrl: uploadedImageUrl,
     sections: {
       product_name: { key: 'product_name', approved: false },
       short_description: { key: 'short_description', approved: false },
@@ -181,7 +198,7 @@ export function buildMockContent(product: Product, brand: BrandProfile, variant 
       whatsapp: { key: 'whatsapp', approved: false },
       image: { key: 'image', approved: false },
     },
-  }
+  };
 }
 
 export function seedSocialAccounts(): SocialAccount[] {
@@ -208,12 +225,12 @@ export const TRIAL_DAYS = 14
 
 export function seedScheduledPosts(): import('../types').ScheduledPost[] {
   return [
-    { id: 'sp-1', productId: 'p-bulb', platform: 'instagram', date: dateStr(now + day), time: '18:30', title: 'Smart LED Bulb — Launch Post', imageUrl: '/images/led-bulb.png', status: 'scheduled', createdAt: iso(now - 2 * day) },
-    { id: 'sp-2', productId: 'p-bulb', platform: 'facebook', date: dateStr(now + day), time: '19:00', title: 'Smart LED Bulb — Promo', imageUrl: '/images/led-bulb.png', status: 'scheduled', createdAt: iso(now - 2 * day) },
-    { id: 'sp-3', productId: 'p-tshirt', platform: 'whatsapp', date: dateStr(now + 2 * day), time: '12:00', title: 'Classic Cotton T-Shirt — Broadcast', imageUrl: '/images/tshirt.png', status: 'scheduled', createdAt: iso(now - day) },
-    { id: 'sp-4', productId: 'p-earbuds', platform: 'instagram', date: dateStr(now - 3 * day), time: '17:00', title: 'Wireless Earbuds Pro — Restock', imageUrl: '/images/earbuds.png', status: 'published', createdAt: iso(now - 6 * day) },
-    { id: 'sp-5', productId: 'p-cable', platform: 'facebook', date: dateStr(now + 4 * day), time: '20:00', title: 'USB-C Cable 2m — Weekend Deal', imageUrl: '/images/usb-cable.png', status: 'scheduled', createdAt: iso(now - day) },
-    { id: 'sp-6', productId: 'p-cable2', platform: 'instagram', date: dateStr(now - 7 * day), time: '16:00', title: 'Braided Lightning Cable — In Stock', imageUrl: '/images/usb-cable.png', status: 'published', createdAt: iso(now - 10 * day) },
+    { id: 'sp-1', productId: 'p-bulb', platform: 'instagram', date: dateStr(now + day), time: '18:30', title: 'Smart LED Bulb — Launch Post', imageUrl: 'https://source.unsplash.com/800x800/?led,bulb', status: 'scheduled', createdAt: iso(now - 2 * day) },
+    { id: 'sp-2', productId: 'p-bulb', platform: 'facebook', date: dateStr(now + day), time: '19:00', title: 'Smart LED Bulb — Promo', imageUrl: 'https://source.unsplash.com/800x800/?led,bulb', status: 'scheduled', createdAt: iso(now - 2 * day) },
+    { id: 'sp-3', productId: 'p-tshirt', platform: 'whatsapp', date: dateStr(now + 2 * day), time: '12:00', title: 'Classic Cotton T-Shirt — Broadcast', imageUrl: 'https://source.unsplash.com/800x800/?tshirt,fashion', status: 'scheduled', createdAt: iso(now - day) },
+    { id: 'sp-4', productId: 'p-earbuds', platform: 'instagram', date: dateStr(now - 3 * day), time: '17:00', title: 'Wireless Earbuds Pro — Restock', imageUrl: 'https://source.unsplash.com/800x800/?earbuds,electronics', status: 'published', createdAt: iso(now - 6 * day) },
+    { id: 'sp-5', productId: 'p-cable', platform: 'facebook', date: dateStr(now + 4 * day), time: '20:00', title: 'USB-C Cable 2m — Weekend Deal', imageUrl: 'https://source.unsplash.com/800x800/?usb,cable', status: 'scheduled', createdAt: iso(now - day) },
+    { id: 'sp-6', productId: 'p-cable2', platform: 'instagram', date: dateStr(now - 7 * day), time: '16:00', title: 'Braided Lightning Cable — In Stock', imageUrl: 'https://source.unsplash.com/800x800/?lightning,cable', status: 'published', createdAt: iso(now - 10 * day) },
   ]
 }
 

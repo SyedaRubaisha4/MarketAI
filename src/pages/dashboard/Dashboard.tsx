@@ -77,15 +77,20 @@ function RecentRow({ product }: { product: Product }) {
 }
 
 export default function Dashboard() {
-  const { products, user, contents, scheduledPosts } = useApp()
-  const firstName = (user?.fullName ?? 'there').split(' ')[0]
-  const recent = [...products].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5)
-
-  const generated = products.filter((p) => !!contents[p.id] || ['needs_review', 'content_ready', 'approved', 'scheduled', 'published'].includes(p.status)).length
-  const published = products.filter((p) => p.status === 'published').length
-  const drafts = products.filter((p) => p.status === 'draft').length
-  const pending = products.filter((p) => p.status === 'needs_review' || p.status === 'content_ready').length
-  const scheduled = scheduledPosts.filter((p) => p.status === 'scheduled').length
+const { products, user, contents, scheduledPosts, loading, dashboardStats } = useApp()
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center">Loading Dashboard...</div>
+  }  const firstName = (user?.fullName ?? 'there').split(' ')[0]
+  const safeProducts = products || []
+   const recent = [...safeProducts]
+    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
+    .slice(0, 5)
+  const totalProducts = dashboardStats?.total_products ?? 0
+  const generated = dashboardStats?.generated ?? 0
+  const published = dashboardStats?.published ?? 0
+  const drafts = dashboardStats?.drafts ?? 0
+  const pending = dashboardStats?.pending ?? 0
+  const scheduled = dashboardStats?.scheduled ?? 0
 
   const quickActions = [
     { icon: Plus, label: 'Add Product', desc: 'Add a new product to your catalog', to: '/products/new', cta: 'Add Product' },
@@ -107,7 +112,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
-        <StatCard label="Total Products" value={products.length} icon={Package} />
+        <StatCard label="Total Products" value={totalProducts} icon={Package} />
         <StatCard label="Generated" value={generated} icon={FileCheck2} />
         <StatCard label="Published" value={published} icon={Send} />
         <StatCard label="Drafts" value={drafts} icon={FileEdit} />
@@ -155,11 +160,6 @@ export default function Dashboard() {
           </ul>
         )}
       </section>
-
-      <p className="flex items-center justify-center gap-1.5 pb-2 text-center text-xs text-slate-400">
-        <RefreshCw className="h-3 w-3" aria-hidden />
-        Demo workspace — AI generation, publishing and scheduling are simulated in your browser.
-      </p>
     </div>
   )
 }

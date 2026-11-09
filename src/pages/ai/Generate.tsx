@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Check, Circle, Loader2, XCircle, Sparkles, ArrowLeft, RotateCcw, Package } from 'lucide-react'
-import { useApp, buildContentFor, useTrialStatus } from '../../store/AppContext'
+import { Check, Circle, Loader2, XCircle, Sparkles, RotateCcw, Package } from 'lucide-react'
+import { useApp, useTrialStatus } from '../../store/AppContext'
 import { Button, ButtonLink } from '../../components/ui/Button'
 import { EmptyState } from '../../components/EmptyState'
 import { cn } from '../../lib/cn'
+import { api } from '../../api/client'; 
 
 const TASKS = [
   'Analyzing product image',
@@ -21,7 +22,7 @@ type StepState = 'pending' | 'active' | 'done' | 'failed'
 export default function Generate() {
   const { productId } = useParams()
   const navigate = useNavigate()
-  const { products, contents, setContent, setProductStatus, toast, brand } = useApp()
+  const { products, contents, setContent, setProductStatus, toast } = useApp()
   const product = products.find((p) => p.id === productId)
 
   const [stepIndex, setStepIndex] = useState(-1)
@@ -34,6 +35,7 @@ export default function Generate() {
   useEffect(() => {
     if (!product || trialBlocked || contents[product.id]) return
     setProductStatus(product.id, 'generating')
+    
     let i = 0
     const advance = () => {
       if (i < TASKS.length) {
@@ -42,16 +44,52 @@ export default function Generate() {
         timers.current.push(window.setTimeout(advance, 900 + Math.random() * 800))
       } else {
         setStepIndex(TASKS.length)
-        timers.current.push(window.setTimeout(() => {
-          setContent(product.id, buildContentFor(product, brand))
-          setProductStatus(product.id, 'content_ready')
-          setDone(true)
+        timers.current.push(window.setTimeout(async () => {
+          try {
+            const res = await api.post(`product/generate/${product.id}/`); 
+            const aiData = res.data.content;
+
+            const mappedContent = {
+              productId: product.id,
+              generatedAt: new Date().toISOString(),
+              names: [`${product.name} - AI Edition`], 
+              selectedName: product.name,
+              shortDescription: aiData.short_description || '',
+              fullDescription: aiData.long_description || '',
+              features: [],
+              seo: { title: '', metaDescription: '', keywords: [] },
+              instagram: { caption: aiData.caption || '', hashtags: [] },
+              facebook: { caption: aiData.caption || '', hashtags: [] },
+              whatsapp: { message: aiData.caption || '' },
+              
+              images: aiData.images || [], 
+              imageUrl: aiData.imageUrl || product.images?.[0]?.url || null,
+              
+              sections: {
+                product_name: { key: 'product_name', approved: false },
+                short_description: { key: 'short_description', approved: false },
+                full_description: { key: 'full_description', approved: false },
+                seo: { key: 'seo', approved: false },
+                instagram: { key: 'instagram', approved: false },
+                facebook: { key: 'facebook', approved: false },
+                whatsapp: { key: 'whatsapp', approved: false },
+                image: { key: 'image', approved: false },
+              },
+            };
+
+            setContent(product.id, mappedContent); 
+            setProductStatus(product.id, 'content_ready')
+            setDone(true)
+            toast('Success', { description: 'AI content generated successfully!' })
+          } catch (error) {
+            console.error("AI Generation failed", error)
+            setFailed(true)
+          }
         }, 600))
       }
     }
     timers.current.push(window.setTimeout(advance, 700))
     return () => { timers.current.forEach(clearTimeout); timers.current = [] }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId])
 
   if (!product) {
@@ -89,22 +127,57 @@ export default function Generate() {
   const progress = done ? 100 : Math.min(99, Math.round((stepIndex / TASKS.length) * 100))
   const secondsLeft = Math.max(1, Math.ceil(((TASKS.length - stepIndex) * 1.3)))
 
-  const retry = () => {
+  const retry = async () => {
     setFailed(false)
     setStepIndex(0)
     let i = 1
-    const advance = () => {
+    const advance = async () => {
       if (i < TASKS.length) {
         setStepIndex(i)
         i += 1
         timers.current.push(window.setTimeout(advance, 900 + Math.random() * 800))
       } else {
         setStepIndex(TASKS.length)
-        timers.current.push(window.setTimeout(() => {
-          setContent(product.id, buildContentFor(product, brand, 1))
-          setProductStatus(product.id, 'content_ready')
-          setDone(true)
-          toast('Content regenerated', { description: `${product.name} marketing package is ready to review.` })
+        timers.current.push(window.setTimeout(async () => {
+          try {
+            const res = await api.post(`product/generate/${product.id}/`); 
+            const aiData = res.data.content;
+
+            const mappedContent = {
+              productId: product.id,
+              generatedAt: new Date().toISOString(),
+              names: [`${product.name} - AI Edition`], 
+              selectedName: product.name,
+              shortDescription: aiData.short_description || '',
+              fullDescription: aiData.long_description || '',
+              features: [],
+              seo: { title: '', metaDescription: '', keywords: [] },
+              instagram: { caption: aiData.caption || '', hashtags: [] },
+              facebook: { caption: aiData.caption || '', hashtags: [] },
+              whatsapp: { message: aiData.caption || '' },
+              
+              images: aiData.images || [], 
+              imageUrl: aiData.imageUrl || product.images?.[0]?.url || null,
+
+              sections: {
+                product_name: { key: 'product_name', approved: false },
+                short_description: { key: 'short_description', approved: false },
+                full_description: { key: 'full_description', approved: false },
+                seo: { key: 'seo', approved: false },
+                instagram: { key: 'instagram', approved: false },
+                facebook: { key: 'facebook', approved: false },
+                whatsapp: { key: 'whatsapp', approved: false },
+                image: { key: 'image', approved: false },
+              },
+            };
+
+            setContent(product.id, mappedContent)
+            setProductStatus(product.id, 'content_ready')
+            setDone(true)
+            toast('Content regenerated', { description: `${product.name} marketing package is ready to review.` })
+          } catch (error) {
+            setFailed(true)
+          }
         }, 600))
       }
     }
@@ -118,7 +191,7 @@ export default function Generate() {
     setProductStatus(product.id, 'generation_failed')
   }
 
-  const primary = product.images.find((i) => i.isPrimary) ?? product.images[0]
+  const primary = product.images?.find((i) => i.isPrimary) ?? product.images?.[0]
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -212,15 +285,6 @@ export default function Generate() {
           )}
         </div>
       </div>
-
-      {!failed && !done && (
-        <p className="text-center">
-          <button onClick={simulateFailure} className="text-xs text-slate-300 underline hover:text-slate-400">
-            Simulate a failure (demo)
-          </button>
-        </p>
-      )}
-      <p className="sr-only">Generation is simulated locally; no AI service is called.</p>
     </div>
   )
 }

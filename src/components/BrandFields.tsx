@@ -33,11 +33,21 @@ interface BrandFieldsProps {
 }
 
 export function BrandFields({ form, update, errors, setError }: BrandFieldsProps) {
-  const toggleTone = (tone: string) =>
-    update({ tones: form.tones.includes(tone) ? form.tones.filter((t) => t !== tone) : [...form.tones, tone] })
+    const toggleTone = (tone: string) => {
+    const currentTones = form.tones || []
+    update({ tones: currentTones.includes(tone) ? currentTones.filter((t) => t !== tone) : [...currentTones, tone] })
+  }
 
   return (
     <div className="space-y-8">
+      <section className="space-y-4">
+        <BrandSectionTitle icon={FileText} title="Business Name" subtitle="What is your brand or store called?" />
+        <Input
+          placeholder="e.g., Ali Fashion Store or Khan Electronics"
+          value={form.businessName || ''}
+          onChange={(e) => { update({ businessName: e.target.value }); }}
+        />
+      </section>
       <section className="space-y-4">
         <BrandSectionTitle icon={FileText} title="Business Description" subtitle="What you sell, who it's for, and why people buy from you." />
         <Textarea
@@ -53,7 +63,7 @@ export function BrandFields({ form, update, errors, setError }: BrandFieldsProps
         <BrandSectionTitle icon={Palette} title="Tone of Voice" subtitle="How should your content sound? Select one or more." />
         <div className="flex flex-wrap gap-2" role="group" aria-label="Tone of voice">
           {TONES.map((tone) => {
-            const selected = form.tones.includes(tone)
+          const selected = (form.tones || []).includes(tone)
             return (
               <button
                 key={tone}
@@ -95,9 +105,9 @@ export function BrandFields({ form, update, errors, setError }: BrandFieldsProps
 
       <section className="space-y-4">
         <BrandSectionTitle icon={Ban} title="Words to Avoid" subtitle="Words AI should never use in your content." />
-        <TagInput
+               <TagInput
           placeholder="Type a word and press Enter"
-          tags={form.wordsToAvoid}
+          tags={form.wordsToAvoid || []} // 👈 Yahan || [] add karein
           onChange={(tags) => update({ wordsToAvoid: tags })}
           hint="Example: cheap, fake, broken"
         />
@@ -107,7 +117,7 @@ export function BrandFields({ form, update, errors, setError }: BrandFieldsProps
         <BrandSectionTitle icon={KeyRound} title="Brand Keywords" subtitle="Attributes you want emphasized in every post." />
         <TagInput
           placeholder="Add a keyword and press Enter"
-          tags={form.keywords}
+          tags={form.keywords || []} // 👈 Yahan || [] add karein
           onChange={(tags) => update({ keywords: tags })}
           hint="Example: reliable, affordable, quality, trusted"
           suggested={['trusted', 'handmade', 'premium', 'fast delivery', 'customer favorite', 'eco-friendly']}

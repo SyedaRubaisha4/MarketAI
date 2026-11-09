@@ -26,9 +26,14 @@ export default function ProductDetail() {
     )
   }
 
-  const primary = product.images.find((i) => i.isPrimary) ?? product.images[0]
-  const approvedCount = content ? Object.values(content.sections).filter((s) => s.approved).length : 0
-  const totalSections = content ? Object.keys(content.sections).length : 0
+  // Safe check for images
+  const productImages = product.images || [];
+  const primary = content?.imageUrl 
+    ? { url: content.imageUrl } 
+    : (productImages.find((i) => i.isPrimary) ?? productImages[0]);
+
+  const approvedCount = content ? Object.values(content.sections || {}).filter((s: any) => s.approved).length : 0
+  const totalSections = content ? Object.keys(content.sections || {}).length : 1 // Avoid divide by zero
 
   return (
     <div className="space-y-6">
@@ -43,9 +48,9 @@ export default function ProductDetail() {
           ) : (
             <div className="flex aspect-square items-center justify-center bg-slate-100 text-slate-300"><ImageOff className="h-12 w-12" aria-hidden /></div>
           )}
-          {product.images.length > 1 && (
+          {productImages.length > 1 && (
             <div className="flex gap-2 overflow-x-auto p-3">
-              {product.images.map((img) => (
+              {productImages.map((img) => (
                 <img key={img.id} src={img.url} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
               ))}
             </div>
@@ -61,14 +66,16 @@ export default function ProductDetail() {
               </div>
               <StatusBadge status={product.status} />
             </div>
-            <p className="mt-4 text-2xl font-bold text-primary-700">{product.currency} {product.price.toLocaleString()}</p>
+            <p className="mt-4 text-2xl font-bold text-primary-700">{product.currency} {product.price?.toLocaleString()}</p>
             <p className="mt-1 text-xs text-slate-400">
               Added {new Date(product.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
               {' · '}Updated {new Date(product.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
             </p>
-            {product.details.length > 0 && (
+            
+            {/* Safe check for details */}
+            {product.details && product.details.length > 0 && (
               <dl className="mt-5 grid grid-cols-2 gap-3">
-                {product.details.map((d) => (
+                {product.details.map((d: any) => (
                   <div key={d.key} className="rounded-xl bg-slate-50 px-4 py-3">
                     <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">{d.key}</dt>
                     <dd className="mt-0.5 text-sm font-semibold text-slate-800">{d.value}</dd>
@@ -76,6 +83,7 @@ export default function ProductDetail() {
                 ))}
               </dl>
             )}
+            
             <div className="mt-6 flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => navigate(`/products/${product.id}/edit`)}><Pencil className="h-4 w-4" aria-hidden /> Edit</Button>
               {content ? (
@@ -142,7 +150,10 @@ export default function ProductDetail() {
 
 function ScheduledForProduct({ productId }: { productId: string }) {
   const { scheduledPosts } = useApp()
-  const posts = scheduledPosts.filter((p) => p.productId === productId && p.status === 'scheduled')
+    const safePosts = Array.isArray(scheduledPosts) ? scheduledPosts : [];
+  
+  const posts = safePosts.filter((p) => p.productId === productId && p.status === 'scheduled')
+  
   if (posts.length === 0) return <p className="mt-3 text-sm text-slate-400">No upcoming scheduled posts for this product.</p>
   return (
     <ul className="mt-3 space-y-2">

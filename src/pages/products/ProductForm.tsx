@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { useApp } from '../../store/AppContext'
@@ -23,6 +23,18 @@ export default function ProductForm() {
   const isEdit = !!productId
   const navigate = useNavigate()
   const { products, addProduct, updateProduct, toast } = useApp()
+   useEffect(() => {
+    const savedBrand = localStorage.getItem('brand_id');
+    if (!savedBrand) {
+      toast("Business Details Required", { 
+        description: "Please complete your business profile before adding products.", 
+        variant: "error" 
+      });
+      
+      // Redirect to onboarding
+      navigate('/onboarding/brand', { replace: true });
+    }
+  }, [navigate, toast]); 
   const existing = isEdit ? products.find((p) => p.id === productId) : undefined
 
   const [form, setForm] = useState<FormState>({
@@ -55,9 +67,10 @@ export default function ProductForm() {
     return Object.keys(er).length === 0
   }
 
-  const save = (mode: 'save' | 'generate') => {
+   const save = async (mode: 'save' | 'generate') => {
     if (!validate()) return
     setSaving(mode)
+    
     const payload = {
       name: form.name.trim(),
       category: form.category,
@@ -66,18 +79,30 @@ export default function ProductForm() {
       details: form.details.filter((d) => d.key.trim() && d.value.trim()),
       images: form.images,
     }
-    window.setTimeout(() => {
+
+    try {
       if (isEdit && existing) {
-        updateProduct(existing.id, payload)
+        // Assuming updateProduct is also async in AppContext
+        await updateProduct(existing.id, payload)
         toast('Product updated', { description: form.name.trim() })
         navigate(mode === 'generate' ? `/products/${existing.id}/generate` : `/products/${existing.id}`)
       } else {
-        const product = addProduct(payload)
+                const product = await addProduct(payload as any)
+        
+        if (!product || !product.id) {
+           toast('Error', { description: 'Product could not be saved properly.', variant: 'error' })
+           setSaving('none')
+           return
+        }
+
         toast('Product added', { description: `${payload.name} was added to your catalog.` })
         navigate(mode === 'generate' ? `/products/${product.id}/generate` : '/products')
       }
+    } catch (error) {
+      console.error("Save error", error)
+    } finally {
       setSaving('none')
-    }, 700)
+    }
   }
 
   const cancel = () => {
@@ -123,11 +148,16 @@ export default function ProductForm() {
             error={errors.price}
             required
           />
-          <Select
+            <Select
             label="Currency"
             value={form.currency}
             onChange={(e) => patch({ currency: e.target.value })}
-            options={['Rs', '$', '€', '£'].map((c) => ({ value: c, label: c === 'Rs' ? 'Rs — Pakistani Rupee' : c }))}
+            options={[
+              { value: 'PKR', label: 'Rs — Pakistani Rupee' },
+              { value: 'USD', label: '$ — US Dollar' },
+              { value: 'EUR', label: '€ — Euro' },
+              { value: 'GBP', label: '£ — British Pound' }
+            ]}
           />
         </div>
 

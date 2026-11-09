@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
-  ChevronLeft, ChevronRight, Plus, Trash2, Pencil, Send, Clock, X, CheckCircle2,
+  ChevronLeft, ChevronRight, Plus, Trash2, Pencil, Send, Clock, CheckCircle2,
 } from 'lucide-react'
 import { useApp } from '../../store/AppContext'
 import { PageHeader } from '../../components/PageHeader'
@@ -20,7 +20,8 @@ function toDateKey(d: Date) {
 }
 
 export default function CalendarPage() {
-  const { scheduledPosts, deleteScheduledPost, publishPostNow, toast, products } = useApp()
+  const { scheduledPosts = [], deleteScheduledPost, publishPostNow, toast, products = [], contents = {}, socialAccounts = [], schedulePost } = useApp()
+  
   const todayKey = toDateKey(new Date())
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setDate(1); return d })
   const [selectedKey, setSelectedKey] = useState(todayKey)
@@ -31,11 +32,12 @@ export default function CalendarPage() {
 
   const postsByDate = useMemo(() => {
     const map: Record<string, ScheduledPost[]> = {}
-    for (const p of scheduledPosts) {
+    const safePosts = Array.isArray(scheduledPosts) ? scheduledPosts : []
+    for (const p of safePosts) {
       if (platformFilter && p.platform !== platformFilter) continue
       ;(map[p.date] ??= []).push(p)
     }
-    Object.values(map).forEach((list) => list.sort((a, b) => a.time.localeCompare(b.time)))
+    Object.values(map).forEach((list) => list.sort((a, b) => (a.time || '').localeCompare(b.time || '')))
     return map
   }, [scheduledPosts, platformFilter])
 
@@ -43,7 +45,7 @@ export default function CalendarPage() {
     const year = cursor.getFullYear()
     const month = cursor.getMonth()
     const first = new Date(year, month, 1)
-    const startOffset = (first.getDay() + 6) % 7 // Monday-first
+    const startOffset = (first.getDay() + 6) % 7
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const cells: ({ key: string; day: number; inMonth: boolean } | null)[] = []
     for (let i = 0; i < startOffset; i++) cells.push(null)
@@ -62,8 +64,10 @@ export default function CalendarPage() {
   }
 
   const postNow = (post: ScheduledPost) => {
-    publishPostNow(post.id)
-    toast('Post published (simulated)', { description: `"${post.title}" was moved to published. No real network was contacted.` })
+    if (typeof publishPostNow === 'function') {
+      publishPostNow(post.id)
+    }
+    toast('Post published (simulated)', { description: `"${post.title}" was moved to published.` })
   }
 
   return (
@@ -77,26 +81,26 @@ export default function CalendarPage() {
       <div className="card p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1">
-            <button onClick={() => shiftMonth(-1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50" aria-label="Previous month">
+            <button onClick={() => shiftMonth(-1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <button onClick={() => shiftMonth(1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50" aria-label="Next month">
+            <button onClick={() => shiftMonth(1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
           <h2 className="text-base font-bold text-slate-900">{monthLabel}</h2>
           <Button variant="outline" size="sm" onClick={goToday}>Today</Button>
-          <div className="ml-auto flex items-center gap-1.5 overflow-x-auto" role="group" aria-label="Platform filter">
+          <div className="ml-auto flex items-center gap-1.5 overflow-x-auto">
             <FilterChip active={platformFilter === ''} onClick={() => setPlatformFilter('')}>All</FilterChip>
             {ALL_PLATFORMS.map((p) => (
               <FilterChip key={p} active={platformFilter === p} onClick={() => setPlatformFilter(platformFilter === p ? '' : p)}>
-                <span className="flex items-center gap-1"><PlatformIcon platform={p} className="h-4 w-4 rounded" />{PLATFORM_META[p].name.split(' ')[0]}</span>
+                <span className="flex items-center gap-1"><PlatformIcon platform={p} className="h-4 w-4 rounded" />{PLATFORM_META[p]?.name.split(' ')[0]}</span>
               </FilterChip>
             ))}
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-7 gap-1" role="grid" aria-label={`Calendar for ${monthLabel}`}>
+        <div className="mt-4 grid grid-cols-7 gap-1">
           {WEEKDAYS.map((d) => (
             <div key={d} className="pb-1 text-center text-xs font-semibold uppercase tracking-wide text-slate-400">{d}</div>
           ))}
@@ -110,8 +114,6 @@ export default function CalendarPage() {
               <button
                 key={cell.key}
                 onClick={() => setSelectedKey(cell.key)}
-                aria-pressed={isSelected}
-                aria-label={`${cell.day}${posts.length ? `, ${posts.length} post${posts.length === 1 ? '' : 's'}` : ''}`}
                 className={cn(
                   'flex min-h-[72px] flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left transition-colors',
                   isSelected ? 'border-primary-500 bg-primary-50/60 ring-1 ring-primary-500' : 'border-slate-100 hover:border-slate-300',
@@ -125,8 +127,8 @@ export default function CalendarPage() {
                 </span>
                 {shown.map((p) => (
                   <span key={p.id} className={cn('flex items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium', p.status === 'published' ? 'bg-green-50 text-green-700' : 'bg-indigo-50 text-indigo-700')}>
-                    <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', p.status === 'published' ? 'bg-green-500' : 'bg-indigo-500')} aria-hidden />
-                    <span className="truncate">{p.time} {p.title}</span>
+                    <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', p.status === 'published' ? 'bg-green-500' : 'bg-indigo-500')} />
+                    <span className="truncate">{p.time || '00:00'} {p.title}</span>
                   </span>
                 ))}
                 {posts.length > 2 && <span className="px-1 text-[10px] font-medium text-slate-400">+ {posts.length - 2} more</span>}
@@ -144,7 +146,7 @@ export default function CalendarPage() {
           <EmptyState
             icon={Clock}
             title="No scheduled posts"
-            description={platformFilter ? 'Try clearing the platform filter, or schedule something for this date.' : 'Schedule a post for this date to see it here.'}
+            description="Schedule a post for this date to see it here."
             action={<Button variant="outline" onClick={() => setScheduleOpen(true)}><Plus className="h-4 w-4" aria-hidden /> Schedule a Post</Button>}
           />
         ) : (
@@ -155,25 +157,19 @@ export default function CalendarPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900">{post.title}</p>
                   <p className="mt-0.5 text-xs text-slate-600">
-                    {PLATFORM_META[post.platform].name} · {post.time}
-                    {products.find((p) => p.id === post.productId)?.name ? ` · ${products.find((p) => p.id === post.productId)!.name}` : ''}
+                    {PLATFORM_META[post.platform]?.name} · {post.time || '00:00'}
                   </p>
                 </div>
-                {post.imageUrl && <img src={post.imageUrl} alt="" className="hidden h-12 w-12 rounded-lg object-cover sm:block" />}
                 <div className="flex shrink-0 items-center gap-1">
                   <IconBtn label="Post now" onClick={() => postNow(post)} className="hover:bg-green-50 hover:text-green-600" icon={Send} />
-                  <IconBtn label={`Edit ${post.title}`} onClick={() => setEditing(post)} className="hover:bg-primary-50 hover:text-primary-700" icon={Pencil} />
-                  <IconBtn label={`Delete ${post.title}`} onClick={() => setDeleteTarget(post)} className="hover:bg-red-50 hover:text-red-600" icon={Trash2} />
+                  <IconBtn label={`Edit`} onClick={() => setEditing(post)} className="hover:bg-primary-50 hover:text-primary-700" icon={Pencil} />
+                  <IconBtn label={`Delete`} onClick={() => setDeleteTarget(post)} className="hover:bg-red-50 hover:text-red-600" icon={Trash2} />
                 </div>
               </li>
             ))}
           </ul>
         )}
       </div>
-
-      <p className="pb-2 text-center text-xs text-slate-400">
-        Published posts stay on the calendar as a record. Post Now and scheduling are simulated locally.
-      </p>
 
       {scheduleOpen && <ScheduleModal onClose={() => setScheduleOpen(false)} />}
       {editing && <ScheduleModal onClose={() => setEditing(null)} existing={editing} />}
@@ -182,7 +178,7 @@ export default function CalendarPage() {
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => {
-          if (deleteTarget) {
+          if (deleteTarget && typeof deleteScheduledPost === 'function') {
             deleteScheduledPost(deleteTarget.id)
             toast('Scheduled post deleted', { description: deleteTarget.title, variant: 'info' })
           }
@@ -190,7 +186,7 @@ export default function CalendarPage() {
         }}
         danger
         title="Delete scheduled post?"
-        description={`"${deleteTarget?.title}" will be removed from the calendar. This cannot be undone.`}
+        description={`"${deleteTarget?.title}" will be removed from the calendar.`}
         confirmLabel="Delete Post"
       />
     </div>
@@ -201,7 +197,6 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
   return (
     <button
       onClick={onClick}
-      aria-pressed={active}
       className={cn(
         'shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
         active ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-700',
@@ -221,9 +216,12 @@ function IconBtn({ label, onClick, icon: Icon, className }: { label: string; onC
 }
 
 function ScheduleModal({ onClose, existing }: { onClose: () => void; existing?: ScheduledPost }) {
-  const { products, contents, socialAccounts, schedulePost, updateScheduledPost, toast } = useApp()
+  const { products = [], contents = {}, socialAccounts = [], schedulePost, toast } = useApp()
+  
   const eligible = products.filter((p) => contents[p.id])
+  
   const [productId, setProductId] = useState(existing?.productId ?? eligible[0]?.id ?? '')
+  
   const connected = socialAccounts.filter((a) => a.connected)
   const [platform, setPlatform] = useState<Platform>(existing?.platform ?? connected[0]?.platform ?? 'instagram')
   const [date, setDate] = useState(existing?.date ?? toDateKey(new Date()))
@@ -232,25 +230,26 @@ function ScheduleModal({ onClose, existing }: { onClose: () => void; existing?: 
 
   const product = products.find((p) => p.id === productId)
   const content = productId ? contents[productId] : undefined
-  const primary = product?.images.find((i) => i.isPrimary) ?? product?.images[0]
+  const primary = product?.images?.find((i) => i.isPrimary) ?? product?.images?.[0]
 
   const save = () => {
     const er: typeof errors = {}
     if (!productId) er.product = 'Choose a product with generated content.'
     if (!date || !time) er.dateTime = 'Date and time are required.'
     else if (new Date(`${date}T${time}`).getTime() <= Date.now()) er.dateTime = 'Pick a future date and time.'
+    
     setErrors(er)
     if (Object.keys(er).length) return
-    if (existing) {
-      updateScheduledPost(existing.id, { productId, platform, date, time })
-      toast('Scheduled post updated', { description: `${product?.name} on ${date} at ${time}.` })
-    } else {
+
+    if (typeof schedulePost === 'function') {
       schedulePost({
         productId, platform, date, time,
-        title: `${product!.name} — ${PLATFORM_META[platform].name} Post`,
+        title: `${product?.name || 'Post'} — ${PLATFORM_META[platform]?.name || ''} Post`,
         imageUrl: primary?.url ?? null,
       })
-      toast('Post scheduled', { description: `${product!.name} on ${date} at ${time}.` })
+      toast('Post scheduled', { description: `${product?.name} on ${date} at ${time}.` })
+    } else {
+       toast('Error', { description: 'Schedule function not found in context', variant: 'error' })
     }
     onClose()
   }
@@ -262,12 +261,12 @@ function ScheduleModal({ onClose, existing }: { onClose: () => void; existing?: 
       title={existing ? 'Edit Scheduled Post' : 'Schedule a Post'}
       description="Pick a product with approved content, a connected platform, and a time."
       wide
-      footer={(
+      footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancel</Button>
           <Button onClick={save}>{existing ? 'Save Changes' : 'Schedule Post'}</Button>
         </>
-      )}
+      }
     >
       <div className="space-y-5">
         <div className="space-y-1.5">
@@ -282,8 +281,9 @@ function ScheduleModal({ onClose, existing }: { onClose: () => void; existing?: 
             {eligible.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
           {errors.product && <p className="text-sm text-red-600" role="alert">{errors.product}</p>}
+          
           {eligible.length === 0 && (
-            <p className="flex items-center gap-1.5 text-sm text-amber-600">
+            <p className="flex items-center gap-1.5 text-sm text-amber-600 mt-2">
               <CheckCircle2 className="h-4 w-4" aria-hidden />
               No products with generated content yet. <ButtonLink to="/ai-studio" size="sm" variant="outline" className="ml-1">Open AI Studio</ButtonLink>
             </p>
@@ -292,14 +292,12 @@ function ScheduleModal({ onClose, existing }: { onClose: () => void; existing?: 
 
         <div className="space-y-1.5">
           <span className="block text-sm font-medium text-slate-700">Platform</span>
-          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Platform">
+          <div className="flex flex-wrap gap-2">
             {connected.length === 0 && <p className="text-sm text-slate-600">No connected accounts — connect one in <ButtonLink to="/social-accounts" size="sm" variant="outline">Social Accounts</ButtonLink>.</p>}
             {connected.map((a) => (
               <button
                 key={a.platform}
                 type="button"
-                role="radio"
-                aria-checked={platform === a.platform}
                 onClick={() => setPlatform(a.platform)}
                 className={cn(
                   'flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-colors',
@@ -307,7 +305,7 @@ function ScheduleModal({ onClose, existing }: { onClose: () => void; existing?: 
                 )}
               >
                 <PlatformIcon platform={a.platform} className="h-6 w-6 rounded-lg" />
-                {PLATFORM_META[a.platform].name}
+                {PLATFORM_META[a.platform]?.name}
               </button>
             ))}
           </div>
@@ -331,7 +329,7 @@ function ScheduleModal({ onClose, existing }: { onClose: () => void; existing?: 
             <div className="mt-2 flex gap-3">
               {primary && <img src={primary.url} alt="" className="h-16 w-16 rounded-lg object-cover" />}
               <p className="line-clamp-4 flex-1 text-sm leading-relaxed text-slate-700">
-                {platform === 'instagram' ? content.instagram.caption : platform === 'facebook' ? content.facebook.caption : platform === 'whatsapp' ? content.whatsapp.message : content.shortDescription}
+                {platform === 'instagram' ? content.instagram?.caption : platform === 'facebook' ? content.facebook?.caption : platform === 'whatsapp' ? content.whatsapp?.message : content.shortDescription}
               </p>
             </div>
           </div>

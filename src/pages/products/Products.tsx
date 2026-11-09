@@ -56,17 +56,16 @@ export default function Products() {
     return list
   }, [products, query, category, status, sort])
 
-  const confirmDelete = () => {
+    const confirmDelete = () => {
     if (!deleteTarget) return
     setDeleting(true)
     window.setTimeout(() => {
-      deleteProduct(deleteTarget.id)
-      toast('Product deleted', { description: `${deleteTarget.name} and its scheduled posts were removed.`, variant: 'info' })
+      deleteProduct(deleteTarget.id) 
+      toast('Product deleted', { description: `${deleteTarget.name} removed.`, variant: 'info' })
       setDeleteTarget(null)
       setDeleting(false)
     }, 600)
   }
-
   return (
     <div className="space-y-5">
       <PageHeader

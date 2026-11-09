@@ -15,19 +15,33 @@ export default function Login() {
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const submit = (e: React.FormEvent) => {
+    const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     const er: typeof errors = {}
     if (!/^\S+@\S+\.\S+$/.test(email)) er.email = 'Enter a valid email address.'
     if (password.length < 8) er.password = 'Password must be at least 8 characters.'
     setErrors(er)
     if (Object.keys(er).length) return
+    
     setLoading(true)
-    window.setTimeout(() => {
-      login(email.trim())
-      navigate(user?.onboarded ? '/dashboard' : '/onboarding/brand')
-    }, 800)
+    try {
+      await login(email.trim(), password)
+      
+      setTimeout(() => {
+        if (user?.onboarded) {
+          window.location.href = '/dashboard';
+        } else {
+          window.location.href = '/onboarding/brand';
+        }
+      }, 500);
+
+    } catch (error) {
+      console.error("Login failed:", error)
+    } finally {
+      setLoading(false)
+    }
   }
+  
 
   return (
     <AuthLayout>
@@ -39,7 +53,7 @@ export default function Login() {
         <div className="relative">
           <Input
             label="Password"
-            type={showPw ? 'text' : 'password'}
+            type={showPw ? 'text' : 'password'} 
             placeholder="Enter your password"
             value={password}
             onChange={(e) => { setPassword(e.target.value); setErrors((er) => ({ ...er, password: undefined })) }}

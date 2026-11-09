@@ -9,15 +9,24 @@ import type { BrandProfile } from '../../types'
 
 export default function BrandSetup() {
   const navigate = useNavigate()
-  const { brand, completeOnboarding, toast } = useApp()
-  const [form, setForm] = useState<BrandProfile>({ ...brand, completed: false })
+  const { brand, completeOnboarding, skipOnboarding, toast } = useApp()
+  const [form, setForm] = useState<BrandProfile>({
+    businessName: brand?.businessName || '',
+    businessType: brand?.businessType || 'Retail',
+    description: brand?.description || '',
+    targetCustomers: brand?.targetCustomers || '',
+    language: brand?.language || 'English',
+    tones: brand?.tones || [],           
+    wordsToAvoid: brand?.wordsToAvoid || [], 
+    keywords: brand?.keywords || [],     
+    completed: false
+  })  
   const [errors, setErrors] = useState<BrandFieldErrors>({})
   const [loading, setLoading] = useState(false)
-
   const update = (patch: Partial<BrandProfile>) => setForm((f) => ({ ...f, ...patch }))
   const setError = (key: keyof BrandFieldErrors, message?: string) => setErrors((er) => ({ ...er, [key]: message }))
 
-  const save = (skip: boolean) => {
+  const save = async (skip: boolean) => {
     if (!skip) {
       const er: BrandFieldErrors = {}
       if (form.description.trim().length < 20) er.description = 'Describe your business in at least 20 characters.'
@@ -29,17 +38,25 @@ export default function BrandSetup() {
         return
       }
     }
+    
     setLoading(true)
-    window.setTimeout(() => {
+    
+    try {
       if (skip) {
-        completeOnboarding({ ...form, completed: false })
-        toast('You can finish your brand profile later in Settings.')
+        skipOnboarding();
+        toast('Brand profile skipped', { description: 'Complete it later in Settings.', variant: 'info' });
+        navigate('/dashboard');
       } else {
-        completeOnboarding(form)
+        await completeOnboarding(form) 
         toast('Brand profile saved', { description: 'AI content will now match your brand voice.' })
       }
+      
       navigate('/dashboard')
-    }, 900)
+    } catch (error) {
+      console.error("Brand save error:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

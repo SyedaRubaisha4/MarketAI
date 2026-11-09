@@ -3,46 +3,48 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 import { AuthLayout } from './AuthLayout'
 import { Button } from '../../components/ui/Button'
-import { Input, Select } from '../../components/ui/Field'
-import { BUSINESS_TYPES } from '../../data/mockData'
+import { Input } from '../../components/ui/Field'
 import { useApp } from '../../store/AppContext'
-import type { BusinessType } from '../../types'
 
-interface Errors { fullName?: string; businessName?: string; businessType?: string; email?: string; password?: string }
+interface Errors { fullName?: string; email?: string; password?: string }
 
 export default function Signup() {
   const navigate = useNavigate()
   const { register } = useApp()
-  const [form, setForm] = useState({ fullName: '', businessName: '', businessType: '', email: '', password: '' })
+  const [form, setForm] = useState({ fullName: '', email: '', password: '' })
   const [errors, setErrors] = useState<Errors>({})
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }))
     setErrors((er) => ({ ...er, [k]: undefined }))
   }
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     const er: Errors = {}
     if (!form.fullName.trim()) er.fullName = 'Full name is required.'
-    if (!form.businessName.trim()) er.businessName = 'Business name is required.'
-    if (!form.businessType) er.businessType = 'Please select a business type.'
     if (!/^\S+@\S+\.\S+$/.test(form.email)) er.email = 'Enter a valid email address.'
     if (form.password.length < 8) er.password = 'Password must be at least 8 characters.'
     setErrors(er)
     if (Object.keys(er).length) return
+    
     setLoading(true)
-    window.setTimeout(() => {
-      register({
+    try {
+      await register({
         fullName: form.fullName.trim(),
-        businessName: form.businessName.trim(),
-        businessType: form.businessType as BusinessType,
         email: form.email.trim(),
+        password: form.password, 
       })
-      navigate('/onboarding/brand')
-    }, 900)
+      
+      window.location.href = '/onboarding/brand'; 
+      
+    } catch (error) {
+      console.error("Signup failed:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const pwChecks = [
@@ -60,17 +62,9 @@ export default function Signup() {
 
       <form onSubmit={submit} noValidate className="mt-8 space-y-5">
         <Input label="Full Name" placeholder="Ahmed Khan" value={form.fullName} onChange={set('fullName')} error={errors.fullName} required autoComplete="name" />
-        <Input label="Business Name" placeholder="Khan Electronics" value={form.businessName} onChange={set('businessName')} error={errors.businessName} required autoComplete="organization" />
-        <Select
-          label="Business Type"
-          placeholder="Select your business type"
-          value={form.businessType}
-          onChange={set('businessType')}
-          error={errors.businessType}
-          required
-          options={BUSINESS_TYPES.map((t) => ({ value: t, label: t }))}
-        />
+        
         <Input label="Email Address" type="email" placeholder="you@business.com" value={form.email} onChange={set('email')} error={errors.email} required autoComplete="email" />
+        
         <div className="relative">
           <Input
             label="Password"

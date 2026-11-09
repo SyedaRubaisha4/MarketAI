@@ -20,23 +20,57 @@ import { BrandSettings } from './pages/settings/BrandSettings';
 import { SubscriptionSettings } from './pages/settings/SubscriptionSettings';
 import { TrialEndingPage } from './pages/trial/TrialEnding';
 import { TrialExpiredPage } from './pages/trial/TrialExpired';
+import { useEffect } from 'react';
 
 function RequireAuth({ children }: { children: JSX.Element }) {
-  const { session } = useApp();
+  const { session, loading } = useApp();
   const location = useLocation();
+  
+  if (loading) return <div className="flex h-screen items-center justify-center text-slate-500">Loading...</div>;
   if (!session) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  
   return children;
 }
 
 function RequireOnboarded({ children }: { children: JSX.Element }) {
-  const { user } = useApp();
-  if (user && !user.onboarded) return <Navigate to="/onboarding/brand" replace />;
+  const { user, loading, toast } = useApp();
+  const location = useLocation();
+
+  if (loading) return <div className="flex h-screen items-center justify-center text-slate-500">Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+
+  const hasBrandId = !!localStorage.getItem('brand_id');
+  const isSkipped = localStorage.getItem('onboarding_skipped') === 'true';
+  const isOnboarding = location.pathname.startsWith('/onboarding');
+  const isAddingProduct = location.pathname === '/products/new' || location.pathname.includes('/edit');
+
+  if (isAddingProduct && !hasBrandId) {
+    setTimeout(() => {
+      toast("Business Details Required", { 
+        description: "Please complete your business profile before adding products.", 
+        variant: "error" 
+      });
+    }, 100);
+    
+    return <Navigate to="/onboarding/brand" replace />;
+  }
+
+  if (user.onboarded && isOnboarding) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (!user.onboarded && !hasBrandId && !isSkipped && !isOnboarding) {
+    return <Navigate to="/onboarding/brand" replace />;
+  }
+
   return children;
 }
-
 function GuestOnly({ children }: { children: JSX.Element }) {
-  const { session } = useApp();
+  const { session, loading } = useApp();
+  
+  if (loading) return <div className="flex h-screen items-center justify-center text-slate-500">Loading...</div>;
   if (session) return <Navigate to="/dashboard" replace />;
+  
   return children;
 }
 
@@ -48,7 +82,14 @@ export default function App() {
       <Route path="/signup" element={<GuestOnly><Signup /></GuestOnly>} />
       <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
 
-      <Route path="/onboarding/brand" element={<RequireAuth><BrandSetup /></RequireAuth>} />
+      {/* Onboarding Route */}
+      <Route path="/onboarding/brand" element={
+        <RequireAuth>
+          <RequireOnboarded>
+            <BrandSetup />
+          </RequireOnboarded>
+        </RequireAuth>
+      } />
 
       <Route path="/trial-ending" element={<RequireAuth><TrialEndingPage /></RequireAuth>} />
       <Route path="/trial-expired" element={<RequireAuth><TrialExpiredPage /></RequireAuth>} />
