@@ -4,10 +4,39 @@ import type {
   ScheduledPost, SocialAccount, Subscription, ToastData, User,
 } from '../types'
 import { api } from '../api/client'
-import { buildMockContent } from '../data/mockData' 
+import { buildMockContent } from '../data/mockData'
 
 const SESSION_KEY = 'marketai-session-v1'
 const uid = () => Math.random().toString(36).slice(2, 10)
+
+// Turn whatever the backend sends back into a readable string
+const getErrMsg = (error: any, fallback: string): string => {
+  const data = error?.response?.data
+  const msg = data?.errors ?? data?.detail ?? data?.message ?? error?.message
+  if (!msg) return fallback
+  if (typeof msg === 'string') return msg
+  try {
+    return Object.values(msg).flat().join(' ') || fallback
+  } catch {
+    return fallback
+  }
+}
+
+// Build the frontend User object from the backend profile response
+const buildUser = (profile: any): User =>
+  ({
+    ...profile,
+    fullName:
+      profile.full_name ||
+      profile.name ||
+      profile.username ||
+      profile.user?.name ||
+      profile.user?.username ||
+      'User',
+    businessName: 'My Business',
+    businessType: 'Retail',
+    onboarded: profile.is_onboarded === true,
+  }) as User
 
 interface AppContextValue {
   user: User | null
@@ -22,9 +51,9 @@ interface AppContextValue {
   session: boolean
   toasts: ToastData[]
   dashboardStats: any
-  
+
   // API Actions
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => void;
   register: (data: any) => void;
   completeOnboarding: (brand: any) => void;
@@ -38,6 +67,7 @@ interface AppContextValue {
   approveSection: (productId: string, key: any) => void;
   schedulePost: (post: Omit<ScheduledPost, 'id' | 'createdAt' | 'status'>) => Promise<ScheduledPost | null>
   setProductStatus: (id: string, status: ProductStatus) => Promise<void>;
+  markNotificationsRead: () => void;
   toast: (title: string, opts?: { description?: string; variant?: ToastData['variant'] }) => void
   dismissToast: (id: number) => void
   resetAll: () => void
@@ -55,123 +85,120 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [subscription, setSubscription] = useState<Subscription | null>({
     plan: 'Free Trial',
     status: 'active',
-    mockState: 'normal', 
-    trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), 
-  } as any) 
+    mockState: 'normal',
+    trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+  } as any)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [toasts, setToasts] = useState<ToastData[]>([])
   const [dashboardStats, setDashboardStats] = useState<any>({
     total_products: 0, drafts: 0, published: 0, scheduled: 0, generated: 0, pending: 0
-  }); 
+  });
 
   const [session, setSession] = useState(() => {
     const flag = localStorage.getItem(SESSION_KEY)
-    return flag === '1' 
+    return flag === '1'
   })
 
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      const token = localStorage.getItem('access_token')
-      if (!token) {
-        setLoading(false)
-        return
+  // Loads everything for the logged-in user. Used on app start AND right after login.
+  // Returns the user profile (or null if it could not be loaded).
+  const loadData = useCallback(async (): Promise<User | null> => {
+    const token = localStorage.getItem('access_token')
+    if (!token) return null
+
+    let loadedUser: User | null = null
+
+    // 1. User profile
+    try {
+      const userRes = await api.get('profile/get/')
+      const profile = userRes.data.user || userRes.data
+      loadedUser = buildUser(profile)
+      setUser(loadedUser)
+
+      if (profile.brand_id) {
+        localStorage.setItem('brand_id', profile.brand_id)
       }
-
-      try {
-        setLoading(true)
-        
-        // 1. Fetch User Profile
-        try {
-          const userRes = await api.get('profile/get/')
-          const profile = userRes.data.user || userRes.data;
-          setUser({
-            ...profile,
-            fullName: profile.full_name || profile.name || profile.username || 'User',
-            businessName: 'My Business',
-            businessType: 'Retail',
-            onboarded: profile.is_onboarded === true 
-          })
-
-          if (profile.brand_id) {
-            localStorage.setItem('brand_id', profile.brand_id);
-          }
-        } catch(e) { console.log("User fetch error", e) }
-
-        // 2. Fetch Products
-        const prodRes = await api.get('product/get/')
-        const productList = prodRes.data.result || [] 
-        
-              const mappedProducts: Product[] = productList.map((p: any) => {
-          let detailsString = '';
-          if (Array.isArray(p.basic_details)) {
-            detailsString = p.basic_details.map((d: any) => `${d.key}: ${d.value}`).join(', ');
-          } else if (p.basic_details && typeof p.basic_details === 'object') {
-            detailsString = Object.entries(p.basic_details).map(([key, value]) => `${key}: ${value}`).join(', ');
-          }
-
-          return {
-            id: p.id,
-            name: p.name || 'Untitled',
-            description: detailsString, 
-            price: Number(p.price) || 0,
-            currency: p.currency || 'PKR',
-            status: p.status === 'Active' ? 'draft' : 'draft',
-            createdAt: p.created_on || new Date().toISOString(),
-            updatedAt: p.updated_on || new Date().toISOString(),
-            
-            category: p.category || 'General',
-            details: Array.isArray(p.basic_details) ? p.basic_details : [],
-            features: Array.isArray(p.features) ? p.features : [],
-
-            images: (p.images && p.images.length > 0) 
-              ? p.images.map((img: any) => ({
-                  id: img.id,
-                  url: img.image_url?.startsWith('http') ? img.image_url : `http://localhost:8000${img.image_url}`,
-                  isPrimary: img.is_primary
-                }))
-              : [
-                  { 
-                    id: 'fallback', 
-                    url: `https://picsum.photos/seed/${p.id}/800/800`,
-                    isPrimary: true 
-                  }
-                ]
-          };
-        })
-        
-        setProducts(mappedProducts)
-
-        // 3. Fetch Stats
-        try {
-          const statsRes = await api.get('dashboard/stats/');
-          setDashboardStats(statsRes.data);
-        } catch (e) {
-          console.log("Stats fetch error:", e);
-        }
-
-        // 4. Fetch Scheduled Posts
-        try {
-          const schedRes = await api.get('schedule/get/') 
-          setScheduledPosts(schedRes.data.result || schedRes.data) 
-        } catch(e) { console.log("Schedule fetch error", e) }
-
-      } catch (error) {
-        console.error("Failed to fetch initial data:", error)
-      } finally {
-        setLoading(false)
-      }
+    } catch (e) {
+      console.log('User fetch error', e)
     }
 
-    fetchInitialData()
+    // 2. Products
+    try {
+      const prodRes = await api.get('product/get/')
+      const productList = prodRes.data.result || []
+
+      const mappedProducts: Product[] = productList.map((p: any) => {
+        let detailsString = ''
+        if (Array.isArray(p.basic_details)) {
+          detailsString = p.basic_details.map((d: any) => `${d.key}: ${d.value}`).join(', ')
+        } else if (p.basic_details && typeof p.basic_details === 'object') {
+          detailsString = Object.entries(p.basic_details).map(([key, value]) => `${key}: ${value}`).join(', ')
+        }
+
+        return {
+          id: p.id,
+          name: p.name || 'Untitled',
+          description: detailsString,
+          price: Number(p.price) || 0,
+          currency: p.currency || 'PKR',
+          status: 'draft',
+          createdAt: p.created_on || new Date().toISOString(),
+          updatedAt: p.updated_on || new Date().toISOString(),
+
+          category: p.category || 'General',
+          details: Array.isArray(p.basic_details) ? p.basic_details : [],
+          features: Array.isArray(p.features) ? p.features : [],
+
+          images: (p.images && p.images.length > 0)
+            ? p.images.map((img: any) => ({
+                id: img.id,
+                url: img.image_url?.startsWith('http') ? img.image_url : `https://market-ai-backend-p143.onrender.com/api/:8000${img.image_url}`,
+                isPrimary: img.is_primary
+              }))
+            : [
+                {
+                  id: 'fallback',
+                  url: `https://picsum.photos/seed/${p.id}/800/800`,
+                  isPrimary: true
+                }
+              ]
+        }
+      })
+
+      setProducts(mappedProducts)
+    } catch (e) {
+      console.error('Products fetch error:', e)
+    }
+
+    // 3. Stats
+    try {
+      const statsRes = await api.get('dashboard/stats/')
+      setDashboardStats(statsRes.data)
+    } catch (e) {
+      console.log('Stats fetch error:', e)
+    }
+
+    // 4. Scheduled posts
+    try {
+      const schedRes = await api.get('schedule/get/')
+      setScheduledPosts(schedRes.data.result || schedRes.data)
+    } catch (e) {
+      console.log('Schedule fetch error', e)
+    }
+
+    return loadedUser
   }, [])
-  
+
+  useEffect(() => {
+    loadData().finally(() => setLoading(false))
+  }, [loadData])
+
   const toastCounter = useRef(0)
 
   const toast = useCallback((title: string, opts?: { description?: string; variant?: ToastData['variant'] }) => {
     toastCounter.current += 1
     const id = toastCounter.current
-    
+
     setToasts((t) => [...t, { id, title, description: opts?.description, variant: opts?.variant ?? 'success' }])
     window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4500)
   }, [])
@@ -179,9 +206,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const dismissToast = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), [])
 
   const value: AppContextValue = useMemo(() => ({
-    user, brand, products, contents, socialAccounts, scheduledPosts, subscription, notifications, loading, session, toasts,dashboardStats,
-    
-    login: async (email: string, password: string) => {
+    user, brand, products, contents, socialAccounts, scheduledPosts, subscription, notifications, loading, session, toasts, dashboardStats,
+
+    login: async (email: string, password: string): Promise<User> => {
       try {
         const res = await api.post('auth/login/', { email, password });
 
@@ -192,27 +219,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (refresh) localStorage.setItem('refresh_token', refresh);
         localStorage.setItem(SESSION_KEY, '1');
 
-        const userRes = await api.get('profile/get/');
-        const profileData = userRes.data.user || userRes.data;
-        
-        const userData = {
-          ...profileData,
-          fullName: profile.name || profile.full_name || profile.username || profile.user?.name || profile.user?.username || 'User',
-          onboarded: profileData.is_onboarded === true, 
-        };
-
-        if (profileData.brand_id) {
-           localStorage.setItem('brand_id', profileData.brand_id);
+        // Fetch profile + products + stats + schedule, and get the user back
+        const loggedInUser = await loadData();
+        if (!loggedInUser) {
+          throw new Error('Could not load your profile. Please try again.');
         }
 
-        setUser(userData);
         setSession(true);
+        return loggedInUser;
 
       } catch (error: any) {
-        console.error("Login failed:", error.response?.data);
-        toast("Login failed", {
-          description: error.response?.data?.errors || "Invalid email or password",
-          variant: "error",
+        console.error('Login failed:', error?.response?.data ?? error);
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem(SESSION_KEY);
+        toast('Login failed', {
+          description: getErrMsg(error, 'Invalid email or password'),
+          variant: 'error',
         });
         throw error;
       }
@@ -227,29 +250,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
         toast("Error", { description: "Status updation has failed", variant: "error" });
       }
     },
+
+    markNotificationsRead: () => {
+      // NOTE: if your Notification type uses a different field (e.g. isRead), change `read` here
+      setNotifications((prev) => prev.map((n: any) => ({ ...n, read: true })));
+    },
+
     logout: () => {
       setSession(false)
+      setUser(null)
+      setBrand(null)
+      setProducts([])
+      setScheduledPosts([])
+      setContents({})
+      setNotifications([])
       localStorage.clear()
     },
-setContent: (productId, content) => {
-  setContents((prev) => ({
-    ...prev,
-    [productId]: content,
-  }));
-},
-        updateContent: (productId, updater) => {
+
+    setContent: (productId, content) => {
+      setContents((prev) => ({
+        ...prev,
+        [productId]: content,
+      }));
+    },
+
+    updateContent: (productId, updater) => {
       setContents((prev) => {
         const current = prev[productId];
         if (!current) return prev;
         return { ...prev, [productId]: updater(current) };
       });
     },
-    
+
     approveSection: (productId, key) => {
       setContents((prev) => {
         const current = prev[productId];
         if (!current) return prev;
-        
+
         const section = current.sections[key];
         return {
           ...prev,
@@ -257,16 +294,16 @@ setContent: (productId, content) => {
             ...current,
             sections: {
               ...current.sections,
-              [key]: { 
-                key: key, 
-                approved: !section?.approved 
+              [key]: {
+                key: key,
+                approved: !section?.approved
               }
             }
           }
         };
       });
     },
-  
+
     register: async (data) => {
       try {
         await api.post('auth/register/', {
@@ -294,8 +331,7 @@ setContent: (productId, content) => {
         toast("Account Created", { description: "Please enter your business details." });
       } catch (e: any) {
         console.error("Register Error:", e.response?.data);
-        const errMsg = e.response?.data?.errors || "Registration failed";
-        toast("Error", { description: String(errMsg), variant: "error" });
+        toast("Error", { description: getErrMsg(e, "Registration failed"), variant: "error" });
         throw e;
       }
     },
@@ -304,16 +340,16 @@ setContent: (productId, content) => {
       try {
         const token = localStorage.getItem('access_token');
         if (!token) {
-            toast("Error", { description: "You are not logged In . Please login again.", variant: "error" });
-            return;
+          toast("Error", { description: "You are not logged In . Please login again.", variant: "error" });
+          return;
         }
 
-        const res = await api.post('brands/create/', {  
+        const res = await api.post('brands/create/', {
           business_name: brandData.businessName,
           business_type: brandData.businessType,
           description: brandData.description,
           target_customer_class: brandData.targetCustomers,
-          tone_of_voice: brandData.tones?.join(', '), 
+          tone_of_voice: brandData.tones?.join(', '),
           language: brandData.language,
           words_to_avoid: brandData.wordsToAvoid,
           brand_keywords: brandData.keywords,
@@ -324,57 +360,57 @@ setContent: (productId, content) => {
         });
 
         setBrand({ ...brandData, completed: true } as any);
-        
+
         if (res.data && res.data.id) {
-           localStorage.setItem('brand_id', res.data.id);
+          localStorage.setItem('brand_id', res.data.id);
         }
 
         if (user) setUser({ ...user, onboarded: true, brandId: res.data.id });
-        
+
         toast("Onboarding Complete", { description: "Brand details have been saved!" });
       } catch (e: any) {
         console.error("Brand save error:", e.response?.data);
-        const errMsg = e.response?.data?.errors || "Brand did not save";
-        toast("Error", { description: String(errMsg), variant: "error" });
-        throw e; 
+        toast("Error", { description: getErrMsg(e, "Brand did not save"), variant: "error" });
+        throw e;
       }
     },
 
     skipOnboarding: () => {
       localStorage.setItem('onboarding_skipped', 'true');
     },
+
     saveBrand: (brandData) => {
       setBrand({ ...brandData, completed: true } as any)
       toast("Brand Saved")
     },
 
-        addProduct: async (p) => {
+    addProduct: async (p) => {
       try {
-        const savedBrand = localStorage.getItem('brand_id'); 
+        const savedBrand = localStorage.getItem('brand_id');
 
         if (!savedBrand) {
-           toast("Error", { description: "Brand ID not found. Please create brand first.", variant: "error" });
-           return null;
+          toast("Error", { description: "Brand ID not found. Please create brand first.", variant: "error" });
+          return null;
         }
 
         const detailsString = p.details?.map((d: any) => `${d.key}: ${d.value}`).join(', ') || '';
 
-        const res = await api.post('product/add/', { 
+        const res = await api.post('product/add/', {
           name: p.name,
           description: detailsString || p.description || 'No description provided',
           price: Number(p.price),
-          currency: p.currency === 'Rs' ? 'PKR' : 
-                    p.currency === '$' ? 'USD' : 
-                    p.currency === '€' ? 'EUR' : 
-                    p.currency === '£' ? 'GBP' : 'PKR',       
-          brand_id: savedBrand, 
-          category_id: 1, 
+          currency: p.currency === 'Rs' ? 'PKR' :
+                    p.currency === '$' ? 'USD' :
+                    p.currency === '€' ? 'EUR' :
+                    p.currency === '£' ? 'GBP' : 'PKR',
+          brand_id: savedBrand,
+          category_id: 1,
         })
-        
-        const newId = 
-          res.data?.result?.product?.id ||  
-          res.data?.result?.id || 
-          res.data?.product?.id || 
+
+        const newId =
+          res.data?.result?.product?.id ||
+          res.data?.result?.id ||
+          res.data?.product?.id ||
           res.data?.id;
 
         if (!newId) {
@@ -384,7 +420,7 @@ setContent: (productId, content) => {
         }
 
         const newProduct: Product = {
-          id: newId, 
+          id: newId,
           name: p.name,
           price: Number(p.price),
           currency: p.currency || 'Rs',
@@ -393,64 +429,65 @@ setContent: (productId, content) => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           images: (p.images && p.images.length > 0) ? p.images : [
-            { 
-              id: 'default-img', 
-              url: `https://picsum.photos/seed/${newId}/800/800`, 
-              isPrimary: true 
+            {
+              id: 'default-img',
+              url: `https://picsum.photos/seed/${newId}/800/800`,
+              isPrimary: true
             }
           ]
         }
-        
+
         setProducts((prev) => [newProduct, ...prev])
         toast("Product Added", { description: " Product has been saved in Database" })
-        
+
         return newProduct
       } catch (e: any) {
         console.error("Add product error:", e.response?.data || e)
-        const errMsg = e.response?.data?.message || "Product save nahi hua"
-        toast("Error", { description: String(errMsg), variant: "error" })
+        toast("Error", { description: getErrMsg(e, "Product save nahi hua"), variant: "error" })
         return null
       }
     },
-        updateProduct: async (id, patch) => {
+
+    updateProduct: async (id, patch) => {
       try {
-        await api.patch(`product/${id}/update/`, patch) 
+        await api.patch(`product/${id}/update/`, patch)
         setProducts((prev) => prev.map(p => p.id === id ? { ...p, ...patch } : p))
       } catch (e) {
         toast("Error", { description: " Product Updation  failed", variant: "error" })
       }
     },
-deleteProduct: async (id) => {
-  try {
-    await api.delete(`product/delete/${id}/`)
-    setProducts((prev) => prev.filter((p) => p.id !== id))
-    
-    setDashboardStats((prev: any) => ({
-      ...prev,
-      total_products: Math.max(0, (prev.total_products || 1) - 1),
-    }))
-    
-    toast("Product Deleted")
-  } catch (e) {
-    toast("Error", { description: "Product deletion failed", variant: "error" })
-  }
-},
 
-       schedulePost: async (post) => {
+    deleteProduct: async (id) => {
       try {
-        const res = await api.post('schedule/create/', post) 
-        
+        await api.delete(`product/delete/${id}/`)
+        setProducts((prev) => prev.filter((p) => p.id !== id))
+
+        setDashboardStats((prev: any) => ({
+          ...prev,
+          total_products: Math.max(0, (prev.total_products || 1) - 1),
+        }))
+
+        toast("Product Deleted")
+      } catch (e) {
+        toast("Error", { description: "Product deletion failed", variant: "error" })
+      }
+    },
+
+    schedulePost: async (post) => {
+      try {
+        const res = await api.post('schedule/create/', post)
+
         const newPost: ScheduledPost = {
           ...post,
-          id: res.data.id || res.data.result?.id, 
+          id: res.data.id || res.data.result?.id,
           status: 'scheduled',
           createdAt: new Date().toISOString()
         }
         setScheduledPosts((prev) => [...prev, newPost])
         return newPost
       } catch (e) {
-         toast("Error", { description: "Schedule fail ho gaya", variant: "error" })
-         return null
+        toast("Error", { description: "Schedule fail ho gaya", variant: "error" })
+        return null
       }
     },
 
@@ -460,7 +497,7 @@ deleteProduct: async (id) => {
       localStorage.clear()
       window.location.reload()
     },
-  }), [user, brand, products, contents, socialAccounts, scheduledPosts, subscription, notifications, loading, session, toasts, toast, dismissToast, dashboardStats])
+  }), [user, brand, products, contents, socialAccounts, scheduledPosts, subscription, notifications, loading, session, toasts, toast, dismissToast, dashboardStats, loadData])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

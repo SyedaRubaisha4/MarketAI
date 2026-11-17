@@ -1,20 +1,22 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import {
   Package, FileCheck2, Send, FileEdit, Clock3, CalendarClock, Plus, Sparkles,
-  CalendarDays, Zap, ArrowRight, PackageOpen, RefreshCw, Eye, Pencil,
+  CalendarDays, ArrowRight, PackageOpen, Eye, Pencil,
 } from 'lucide-react'
 import { useApp } from '../../store/AppContext'
 import { StatCard } from '../../components/StatCard'
 import { StatusBadge } from '../../components/StatusBadge'
 import { EmptyState } from '../../components/EmptyState'
 import { ButtonLink } from '../../components/ui/Button'
+import { cn } from '../../lib/cn'
 import type { Product } from '../../types'
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 
 export function ProductThumb({ product, className }: { product: Product; className?: string }) {
-  const src = product.images.find((i) => i.isPrimary)?.url ?? product.images[0]?.url
+  const src = product.images?.find((i) => i.isPrimary)?.url ?? product.images?.[0]?.url
   if (src) return <img src={src} alt={product.name} className={className} loading="lazy" />
   return (
     <span className={`flex items-center justify-center bg-slate-100 text-slate-400 ${className}`} aria-hidden>
@@ -41,33 +43,19 @@ function RecentRow({ product }: { product: Product }) {
     : 'Generate'
 
   return (
-    <li className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-primary-50/40 sm:gap-4 sm:px-5">
-      <ProductThumb product={product} className="h-11 w-11 shrink-0 rounded-xl object-cover sm:h-12 sm:w-12" />
+    <li className="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-slate-50/80">
+      <ProductThumb product={product} className="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-slate-200" />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
-        <p className="mt-0.5 truncate text-xs text-slate-600">{product.currency} {product.price.toLocaleString()} · Updated {fmtDate(product.updatedAt)}</p>
+        <p className="truncate text-sm font-bold text-slate-900">{product.name}</p>
+        <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{product.currency} {product.price?.toLocaleString()} · Updated {product.updatedAt ? fmtDate(product.updatedAt) : ''}</p>
       </div>
       <div className="hidden shrink-0 sm:block"><StatusBadge status={product.status} /></div>
-      <div className="flex shrink-0 items-center gap-1.5">
-        <Link
-          to={`/products/${product.id}`}
-          className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 md:inline-flex"
-          aria-label={`View ${product.name}`}
-          title="View details"
-        >
-          <Eye className="h-4 w-4" />
-        </Link>
-        <Link
-          to={`/products/${product.id}/edit`}
-          className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 md:inline-flex"
-          aria-label={`Edit ${product.name}`}
-          title="Edit product"
-        >
-          <Pencil className="h-4 w-4" />
-        </Link>
+      <div className="flex shrink-0 items-center gap-2 ml-4">
+        <Link to={`/products/${product.id}`} className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200/50 hover:text-slate-900 md:inline-flex transition-colors"><Eye className="h-4 w-4" /></Link>
+        <Link to={`/products/${product.id}/edit`} className="hidden h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200/50 hover:text-slate-900 md:inline-flex transition-colors"><Pencil className="h-4 w-4" /></Link>
         <button
           onClick={action}
-          className="inline-flex h-8 items-center gap-1 rounded-lg border border-primary-200 bg-white px-3 text-xs font-semibold text-primary-700 shadow-sm transition-colors hover:bg-primary-50"
+          className="inline-flex h-8 items-center gap-1 rounded-lg bg-slate-900 px-4 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800 hover:shadow-md"
         >
           {actionLabel}
         </button>
@@ -77,14 +65,27 @@ function RecentRow({ product }: { product: Product }) {
 }
 
 export default function Dashboard() {
-const { products, user, contents, scheduledPosts, loading, dashboardStats } = useApp()
-  if (loading) {
-    return <div className="flex h-screen items-center justify-center">Loading Dashboard...</div>
-  }  const firstName = (user?.fullName ?? 'there').split(' ')[0]
-  const safeProducts = products || []
-   const recent = [...safeProducts]
-    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
-    .slice(0, 5)
+  const { products, user, contents, loading, dashboardStats } = useApp()
+  
+  // State to manage which card is active (black block)
+  const [activeAction, setActiveAction] = useState<'add' | 'generate' | 'calendar'>('add')
+  
+if (loading && (!products || products.length === 0)) {
+  return (
+    <div className="mx-auto max-w-6xl space-y-8 animate-pulse">
+      <div className="h-10 w-64 rounded-xl bg-slate-200" />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-24 rounded-2xl bg-slate-100" />
+        ))}
+      </div>
+      <div className="h-64 rounded-2xl bg-slate-100" />
+    </div>
+  )
+}
+  const firstName = (user?.fullName ?? 'there').split(' ')[0]
+  const recent = [...(products || [])].sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '')).slice(0, 5)
+    
   const totalProducts = dashboardStats?.total_products ?? 0
   const generated = dashboardStats?.generated ?? 0
   const published = dashboardStats?.published ?? 0
@@ -92,70 +93,180 @@ const { products, user, contents, scheduledPosts, loading, dashboardStats } = us
   const pending = dashboardStats?.pending ?? 0
   const scheduled = dashboardStats?.scheduled ?? 0
 
-  const quickActions = [
-    { icon: Plus, label: 'Add Product', desc: 'Add a new product to your catalog', to: '/products/new', cta: 'Add Product' },
-    { icon: Sparkles, label: 'Generate AI Content', desc: products[0] ? `Continue with ${products[0].name}` : 'Pick a product and generate content', to: products[0] ? `/products/${products[0].id}/generate` : '/products', cta: 'Open AI Studio' },
-    { icon: CalendarDays, label: 'Calendar', desc: scheduled > 0 ? `${scheduled} post${scheduled === 1 ? '' : 's'} scheduled` : 'Plan your upcoming posts', to: '/calendar', cta: 'View Calendar' },
-    { icon: Zap, label: 'Post Now', desc: 'Publish approved content instantly', to: products.find((p) => contents[p.id]) ? `/publish/${products.find((p) => contents[p.id])!.id}` : '/products', cta: 'Publish' },
-  ]
-
   return (
-    <div className="space-y-7">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto">
+      
+      {/* Header Section */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Welcome back, {firstName}!</h1>
-          <p className="mt-1.5 text-sm text-slate-600">Here's what's happening with your product content and marketing.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Dashboard</h1>
+          <p className="mt-1.5 text-sm font-medium text-slate-500">Welcome back, {firstName}. Here's your overview.</p>
         </div>
-        <ButtonLink to="/products/new" size="lg" className="shadow-md shadow-primary-600/20 sm:shrink-0">
-          <Plus className="h-4 w-4" aria-hidden /> Add Product
+        <ButtonLink to="/products/new" size="lg" className="bg-slate-900 hover:bg-slate-800 text-white shadow-md rounded-xl">
+          <Plus className="h-4 w-4 mr-2" aria-hidden /> New Product
         </ButtonLink>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
-        <StatCard label="Total Products" value={totalProducts} icon={Package} />
-        <StatCard label="Generated" value={generated} icon={FileCheck2} />
-        <StatCard label="Published" value={published} icon={Send} />
-        <StatCard label="Drafts" value={drafts} icon={FileEdit} />
-        <StatCard label="Pending" value={pending} icon={Clock3} />
-        <StatCard label="Scheduled" value={scheduled} icon={CalendarClock} />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+        <StatCard label="Total" value={totalProducts} icon={Package} colorClass="bg-slate-100 text-slate-600" />
+        <StatCard label="Generated" value={generated} icon={FileCheck2} colorClass="bg-purple-50 text-purple-600" />
+        <StatCard label="Published" value={published} icon={Send} colorClass="bg-emerald-50 text-emerald-600" />
+        <StatCard label="Drafts" value={drafts} icon={FileEdit} colorClass="bg-orange-50 text-orange-600" />
+        <StatCard label="Pending" value={pending} icon={Clock3} colorClass="bg-rose-50 text-rose-600" />
+        <StatCard label="Scheduled" value={scheduled} icon={CalendarClock} colorClass="bg-cyan-50 text-cyan-600" />
       </div>
 
+      {/* Quick Actions Section */}
       <section>
-        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Quick Actions</h2>
-        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
-          {quickActions.map(({ icon: Icon, label, desc, to, cta }) => (
-            <Link
-              key={label}
-              to={to}
-              className="group rounded-2xl border border-white/70 bg-white p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-lg"
-            >
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-100/70 text-primary-700 transition-colors group-hover:bg-primary-200/70">
-                <Icon className="h-5 w-5" aria-hidden />
-              </span>
-              <p className="mt-4 text-[15px] font-semibold text-slate-900">{label}</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-600 line-clamp-2">{desc}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary-700">
-                {cta} <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
-              </span>
-            </Link>
-          ))}
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-400">Quick Actions</h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          
+          {/* Card 1: Add new product */}
+          <div
+            onClick={() => setActiveAction('add')}
+            className={cn(
+              "group relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1",
+              activeAction === 'add'
+                ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20"
+                : "border border-slate-200 bg-white text-slate-900 shadow-sm hover:border-slate-300 hover:shadow-md"
+            )}
+          >
+            <div className="relative z-10 flex h-full flex-col justify-between">
+              <div>
+                {activeAction !== 'add' && (
+                  <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 transition-transform duration-300 group-hover:scale-110">
+                    <Package className="h-6 w-6" />
+                  </span>
+                )}
+                <h3 className={cn("text-lg font-bold", activeAction === 'add' ? "text-white" : "text-slate-900")}>Add new product</h3>
+                <p className={cn("mt-2 text-sm font-medium", activeAction === 'add' ? "text-slate-400" : "text-slate-500")}>
+                  Create a listing and let our system generate the assets.
+                </p>
+              </div>
+              {activeAction === 'add' && (
+                /* Yahan Link laga diya hai taake click karne par page change ho */
+                <Link to="/products/new" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-white transition-colors hover:text-indigo-300">
+                  Create <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              )}
+            </div>
+            {activeAction === 'add' && (
+              <>
+                <div className="absolute -right-4 -bottom-4 opacity-10">
+                  <Package className="h-32 w-32 text-white" />
+                </div>
+                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-indigo-500/30 blur-3xl transition-all duration-500 group-hover:bg-indigo-400/40" />
+              </>
+            )}
+          </div>
+
+          {/* Card 2: Generate AI */}
+          <div
+            onClick={() => setActiveAction('generate')}
+            className={cn(
+              "group relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1",
+              activeAction === 'generate'
+                ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20"
+                : "border border-slate-200 bg-white text-slate-900 shadow-sm hover:border-slate-300 hover:shadow-md"
+            )}
+          >
+            <div className="relative z-10 flex h-full flex-col justify-between">
+              <div>
+                {activeAction !== 'generate' && (
+                  <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 transition-transform duration-300 group-hover:scale-110">
+                    <Sparkles className="h-6 w-6" />
+                  </span>
+                )}
+                <h3 className={cn("text-lg font-bold", activeAction === 'generate' ? "text-white" : "text-slate-900")}>Generate Content</h3>
+                <p className={cn("mt-2 text-sm font-medium line-clamp-2", activeAction === 'generate' ? "text-slate-400" : "text-slate-500")}>
+                  {products?.[0] ? `Continue with ${products[0].name}` : 'Pick a product and generate content.'}
+                </p>
+              </div>
+              {activeAction === 'generate' && (
+                /* Yahan Link laga diya hai taake click karne par page change ho */
+                <Link 
+                  to={products?.[0] ? `/products/${products[0].id}/generate` : '/products'} 
+                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-white transition-colors hover:text-indigo-300"
+                >
+                  Generate <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              )}
+            </div>
+            {activeAction === 'generate' && (
+              <>
+                <div className="absolute -right-4 -bottom-4 opacity-10">
+                  <Sparkles className="h-32 w-32 text-white" />
+                </div>
+                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-purple-500/30 blur-3xl transition-all duration-500 group-hover:bg-purple-400/40" />
+              </>
+            )}
+          </div>
+
+          {/* Card 3: Calendar */}
+          <div
+            onClick={() => setActiveAction('calendar')}
+            className={cn(
+              "group relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1",
+              activeAction === 'calendar'
+                ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20"
+                : "border border-slate-200 bg-white text-slate-900 shadow-sm hover:border-slate-300 hover:shadow-md"
+            )}
+          >
+            <div className="relative z-10 flex h-full flex-col justify-between">
+              <div>
+                {activeAction !== 'calendar' && (
+                  <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-600 transition-transform duration-300 group-hover:scale-110">
+                    <CalendarDays className="h-6 w-6" />
+                  </span>
+                )}
+                <h3 className={cn("text-lg font-bold", activeAction === 'calendar' ? "text-white" : "text-slate-900")}>Calendar</h3>
+                <p className={cn("mt-2 text-sm font-medium line-clamp-2", activeAction === 'calendar' ? "text-slate-400" : "text-slate-500")}>
+                  {scheduled > 0 ? `${scheduled} posts scheduled.` : 'Plan your upcoming posts.'}
+                </p>
+              </div>
+              {activeAction === 'calendar' && (
+                /* Yahan Link laga diya hai taake click karne par page change ho */
+                <Link to="/calendar" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-white transition-colors hover:text-indigo-300">
+                  View Calendar <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              )}
+            </div>
+            {activeAction === 'calendar' && (
+              <>
+                <div className="absolute -right-4 -bottom-4 opacity-10">
+                  <CalendarDays className="h-32 w-32 text-white" />
+                </div>
+                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-orange-500/30 blur-3xl transition-all duration-500 group-hover:bg-orange-400/40" />
+              </>
+            )}
+          </div>
+
         </div>
       </section>
 
+      {/* Recent Products Section */}
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Recent Products</h2>
-          <Link to="/products" className="text-sm font-semibold text-primary-700 hover:text-primary-700">View All</Link>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">Recent Products</h2>
+          <Link to="/products" className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">View All</Link>
         </div>
         {recent.length === 0 ? (
           <EmptyState
             icon={PackageOpen}
             title="No products yet"
-            description="Add your first product and let AI create a complete marketing package for it in about a minute."
-            action={<ButtonLink to="/products/new"><Plus className="h-4 w-4" aria-hidden /> Add Product</ButtonLink>}
+            description="Add your first product to get started."
+            action={
+              <ButtonLink
+                to="/products/new"
+                className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-md px-6 font-bold"
+              >
+                <Plus className="h-4 w-4" aria-hidden /> Add Product
+              </ButtonLink>
+            }
           />
         ) : (
-          <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-white/70 bg-white shadow-card">
+          <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             {recent.map((p) => <RecentRow key={p.id} product={p} />)}
           </ul>
         )}

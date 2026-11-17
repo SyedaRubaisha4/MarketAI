@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '../lib/cn'
+import type { ElementType } from 'react'
 
 interface StatCardProps {
   label: string
@@ -9,17 +10,19 @@ interface StatCardProps {
   hint?: string
 }
 
-export function StatCard({ label, value, icon: Icon, iconClasses, hint }: StatCardProps) {
+export function StatCard({ label, value, icon: Icon, colorClass = "bg-slate-100 text-slate-600" }: { label: string, value: number | string, icon: ElementType, colorClass?: string }) {
   return (
-    <div className="rounded-2xl border border-white/70 bg-white p-4 shadow-card transition-shadow hover:shadow-card-lg sm:p-5">
-      <div className="flex items-start justify-between gap-2">
-        <p className="whitespace-nowrap pt-1 text-xs font-medium text-slate-600">{label}</p>
-        <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-700', iconClasses)}>
-          <Icon className="h-4 w-4" aria-hidden />
-        </span>
+    <div className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+          <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${colorClass} transition-transform duration-300 group-hover:scale-110`}>
+            <Icon className="h-4 w-4" aria-hidden />
+          </span>
+        </div>
+        <p className="text-3xl font-extrabold tracking-tight text-slate-900">{value}</p>
       </div>
-      <p className="mt-1 text-[28px] font-bold leading-tight tracking-tight text-slate-900">{value}</p>
-      {hint && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
     </div>
   )
 }
+

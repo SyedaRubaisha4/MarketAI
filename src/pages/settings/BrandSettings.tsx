@@ -134,7 +134,14 @@ export function BrandSettings() {
       </div>
 
       <div className="mt-8 flex justify-end border-t border-slate-100 pt-5">
-        <Button onClick={save} loading={saving}>Save Brand Profile</Button>
+        {/* BUTTON FIX: Black Theme */}
+        <Button 
+          onClick={save} 
+          loading={saving} 
+          className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-md px-6 font-bold"
+        >
+          Save Brand Profile
+        </Button>
       </div>
     </div>
   );

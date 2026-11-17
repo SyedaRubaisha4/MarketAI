@@ -8,10 +8,9 @@
     text-rendering: optimizeLegibility;
   }
   body {
-    @apply bg-[#f2ebdc] text-slate-900 font-sans;
-  }
-  * {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+    /* Ek pyara sa halka Blueish-Grey tint jo background mein depth dega */
+    background-color: #f4f6fc !important; 
+    color: #0f172a;
   }
 }
 
@@ -20,7 +19,12 @@
     @apply bg-white rounded-2xl border border-slate-200/80 shadow-card;
   }
 }
-
+@layer components {
+  
+  .glass-card {
+    @apply rounded-2xl border border-white/60 bg-white/70 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl transition-all duration-300;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

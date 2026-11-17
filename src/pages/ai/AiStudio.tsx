@@ -22,7 +22,14 @@ export default function AiStudio() {
           icon={PackageOpen}
           title="No products to work with"
           description="Add a product first, then let AI create its complete marketing package."
-          action={<ButtonLink to="/products/new">Add Product</ButtonLink>}
+          action={
+            <ButtonLink
+              to="/products/new"
+              className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-md px-6 font-bold"
+            >
+              Add Product
+            </ButtonLink>
+          }
         />
       ) : (
         <>
@@ -48,7 +55,7 @@ export default function AiStudio() {
                       <div className="hidden sm:block"><StatusBadge status={p.status} /></div>
                       <button
                         onClick={() => navigate(`/products/${p.id}/review`)}
-                        className="inline-flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-primary-700 hover:bg-primary-50"
+                        className="inline-flex h-8 items-center gap-1 rounded-lg bg-slate-900 px-4 text-xs font-bold text-white shadow-sm transition-all hover:bg-slate-800 hover:shadow-md"
                       >
                         Review <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                       </button>
@@ -71,7 +78,7 @@ export default function AiStudio() {
                   </div>
                   <button
                     onClick={() => navigate(p.status === 'generating' ? `/products/${p.id}/generate` : `/products/${p.id}/generate`)}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700 hover:bg-primary-100"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm transition-all hover:bg-slate-800 hover:shadow-md"
                     aria-label={`Generate content for ${p.name}`}
                     title="Generate content"
                   >

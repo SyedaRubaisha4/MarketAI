@@ -6,18 +6,18 @@ export default {
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
-      colors: {
+        colors: {
         primary: {
-          50: '#faf3e6',
-          100: '#f4e7cd',
-          200: '#e9d3a5',
-          300: '#dcbb77',
-          400: '#cfa052',
-          500: '#c28e3f',
-          600: '#a97431',
-          700: '#8a5d2a',
-          800: '#714c27',
-          900: '#5d3f22',
+          50: '#f5f3ff', 
+          100: '#ede9fe', 
+          200: '#ddd6fe',
+          300: '#c4b5fd',
+          400: '#a78bfa',
+          500: '#8b5cf6', 
+          600: '#7c3aed', 
+          700: '#6d28d9', 
+          800: '#5b21b6',
+          900: '#4c1d95',
         },
       },
       boxShadow: {

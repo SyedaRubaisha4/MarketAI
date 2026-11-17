@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Image as ImageIcon, Sparkles, CheckCircle2, Save } from 'lucide-react'
 import { useApp } from '../../store/AppContext'
-import { Button, ButtonLink } from '../../components/ui/Button'
+import { Button } from '../../components/ui/Button'
 import { Input, Select } from '../../components/ui/Field'
 import { ProductImageUploader } from '../../components/ProductImageUploader'
 import { ConfirmDialog } from '../../components/ui/Dialog'
 import { PRODUCT_CATEGORIES } from '../../data/mockData'
-import type { Product, ProductImageRef } from '../../types'
+import type { ProductImageRef } from '../../types'
 
 interface FormState {
   name: string
@@ -23,25 +23,25 @@ export default function ProductForm() {
   const isEdit = !!productId
   const navigate = useNavigate()
   const { products, addProduct, updateProduct, toast } = useApp()
-   useEffect(() => {
+  
+  useEffect(() => {
     const savedBrand = localStorage.getItem('brand_id');
     if (!savedBrand) {
       toast("Business Details Required", { 
         description: "Please complete your business profile before adding products.", 
         variant: "error" 
       });
-      
-      // Redirect to onboarding
       navigate('/onboarding/brand', { replace: true });
     }
   }, [navigate, toast]); 
+
   const existing = isEdit ? products.find((p) => p.id === productId) : undefined
 
   const [form, setForm] = useState<FormState>({
     name: existing?.name ?? '',
     category: existing?.category ?? '',
     price: existing ? String(existing.price) : '',
-    currency: existing?.currency ?? 'Rs',
+    currency: existing?.currency ?? 'PKR',
     details: existing?.details?.length ? existing.details : [{ key: '', value: '' }],
     images: existing?.images ?? [],
   })
@@ -67,7 +67,7 @@ export default function ProductForm() {
     return Object.keys(er).length === 0
   }
 
-   const save = async (mode: 'save' | 'generate') => {
+  const save = async (mode: 'save' | 'generate') => {
     if (!validate()) return
     setSaving(mode)
     
@@ -82,19 +82,16 @@ export default function ProductForm() {
 
     try {
       if (isEdit && existing) {
-        // Assuming updateProduct is also async in AppContext
         await updateProduct(existing.id, payload)
         toast('Product updated', { description: form.name.trim() })
         navigate(mode === 'generate' ? `/products/${existing.id}/generate` : `/products/${existing.id}`)
       } else {
-                const product = await addProduct(payload as any)
-        
+        const product = await addProduct(payload as any)
         if (!product || !product.id) {
            toast('Error', { description: 'Product could not be saved properly.', variant: 'error' })
            setSaving('none')
            return
         }
-
         toast('Product added', { description: `${payload.name} was added to your catalog.` })
         navigate(mode === 'generate' ? `/products/${product.id}/generate` : '/products')
       }
@@ -111,91 +108,159 @@ export default function ProductForm() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <Link to={isEdit ? `/products/${productId}` : '/products'} className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-800">
-          <ArrowLeft className="h-4 w-4" aria-hidden /> Back to Products
-        </Link>
-        <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900">{isEdit ? 'Edit Product' : 'Add New Product'}</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          {isEdit ? 'Update your product details, then regenerate content if anything changed.' : 'Add the basics and AI will build a complete marketing package.'}
-        </p>
+    <div className="mx-auto max-w-6xl animate-in fade-in duration-500 h-[calc(100vh-100px)] flex flex-col">
+      
+      {/* Header - Compact */}
+      <div className="flex items-center justify-between mb-4 shrink-0">
+        <div>
+          <Link to={isEdit ? `/products/${productId}` : '/products'} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden /> Back to Products
+          </Link>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 mt-1">{isEdit ? 'Edit Product' : 'Add New Product'}</h1>
+        </div>
       </div>
 
-      <div className="card space-y-6 p-5 sm:p-7">
-        <ProductImageUploader images={form.images} onChange={(images) => patch({ images })} />
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Input label="Product Name" placeholder="Wireless Earbuds Pro" value={form.name} onChange={(e) => { patch({ name: e.target.value }); setErrors((er) => ({ ...er, name: undefined })) }} error={errors.name} required />
-          <Select
-            label="Category"
-            placeholder="Select a category"
-            value={form.category}
-            onChange={(e) => { patch({ category: e.target.value }); setErrors((er) => ({ ...er, category: undefined })) }}
-            error={errors.category}
-            required
-            options={PRODUCT_CATEGORIES.map((c) => ({ value: c, label: c }))}
-          />
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Input
-            label="Price"
-            type="number" min="0" step="0.01"
-            placeholder="2499"
-            value={form.price}
-            onChange={(e) => { patch({ price: e.target.value }); setErrors((er) => ({ ...er, price: undefined })) }}
-            error={errors.price}
-            required
-          />
-            <Select
-            label="Currency"
-            value={form.currency}
-            onChange={(e) => patch({ currency: e.target.value })}
-            options={[
-              { value: 'PKR', label: 'Rs — Pakistani Rupee' },
-              { value: 'USD', label: '$ — US Dollar' },
-              { value: 'EUR', label: '€ — Euro' },
-              { value: 'GBP', label: '£ — British Pound' }
-            ]}
-          />
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="block text-sm font-medium text-slate-700">Basic Details</span>
-              <p className="text-xs text-slate-400">Specifications like color, battery, and size help AI write richer content.</p>
+      {/* Main Form Grid */}
+      <div className="grid gap-6 lg:grid-cols-3 flex-1 min-h-0">
+        
+        {/* Left Column: Form (2 Columns) */}
+        <div className="lg:col-span-2 flex flex-col gap-4 overflow-y-auto pr-2 pb-2">
+          
+          {/* Image Upload Section */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shrink-0">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+              <ImageIcon className="h-4 w-4 text-indigo-500" /> Product Images
+            </h2>
+            <div className="rounded-xl border-2 border-dashed border-indigo-100 bg-indigo-50/30 p-1">
+              <ProductImageUploader images={form.images} onChange={(images) => patch({ images })} />
             </div>
-            <Button variant="outline" size="sm" onClick={() => patch({ details: [...form.details, { key: '', value: '' }] })}>
-              <Plus className="h-4 w-4" aria-hidden /> Add more details
-            </Button>
           </div>
-          {form.details.map((d, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <Input aria-label={`Detail ${i + 1} name`} placeholder="Color" value={d.key} onChange={(e) => setDetail(i, 'key', e.target.value)} className="!space-y-0" />
-              <Input aria-label={`Detail ${i + 1} value`} placeholder="Black" value={d.value} onChange={(e) => setDetail(i, 'value', e.target.value)} className="!space-y-0" />
-              <button
-                type="button"
-                onClick={() => patch({ details: form.details.filter((_, idx) => idx !== i) })}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-600"
-                aria-label={`Remove detail ${i + 1}`}
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button variant="secondary" onClick={cancel} disabled={saving !== 'none'}>Cancel</Button>
-        <Button variant="outline" onClick={() => save('save')} loading={saving === 'save'}>
-          {isEdit ? 'Save Changes' : 'Save as Draft'}
-        </Button>
-        <Button onClick={() => save('generate')} loading={saving === 'generate'}>
-          Save &amp; Generate
-        </Button>
+          {/* Basic Info Section */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shrink-0 space-y-4">
+            <h2 className="text-sm font-bold text-slate-900 mb-1">Basic Information</h2>
+            
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input 
+                label="Product Name *" 
+                placeholder="Wireless Earbuds Pro" 
+                value={form.name} 
+                onChange={(e) => { patch({ name: e.target.value }); setErrors((er) => ({ ...er, name: undefined })) }} 
+                error={errors.name} 
+                className="bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500 rounded-lg text-sm"
+              />
+              <Select
+                label="Category *"
+                placeholder="Select a category"
+                value={form.category}
+                onChange={(e) => { patch({ category: e.target.value }); setErrors((er) => ({ ...er, category: undefined })) }}
+                error={errors.category}
+                options={PRODUCT_CATEGORIES.map((c) => ({ value: c, label: c }))}
+                className="bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500 rounded-lg text-sm cursor-pointer hover:bg-slate-100 transition-colors"
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Price *"
+                type="number" min="0" step="0.01"
+                placeholder="2499"
+                value={form.price}
+                onChange={(e) => { patch({ price: e.target.value }); setErrors((er) => ({ ...er, price: undefined })) }}
+                error={errors.price}
+                className="bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500 rounded-lg text-sm"
+              />
+              <Select
+                label="Currency"
+                value={form.currency}
+                onChange={(e) => patch({ currency: e.target.value })}
+                options={[
+                  { value: 'PKR', label: 'Rs — Pakistani Rupee' },
+                  { value: 'USD', label: '$ — US Dollar' },
+                  { value: 'EUR', label: '€ — Euro' },
+                  { value: 'GBP', label: '£ — British Pound' }
+                ]}
+                className="bg-slate-50 border-slate-200 focus:bg-white focus:border-indigo-500 rounded-lg text-sm cursor-pointer hover:bg-slate-100 transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Details Section */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">Basic Details</h2>
+                <p className="text-[11px] font-medium text-slate-500">Specifications help AI write richer content.</p>
+              </div>
+              <Button variant="outline" size="sm" className="rounded-lg border-indigo-100 text-indigo-600 hover:bg-indigo-50 h-8 text-xs" onClick={() => patch({ details: [...form.details, { key: '', value: '' }] })}>
+                <Plus className="h-3.5 w-3.5 mr-1" aria-hidden /> Add Detail
+              </Button>
+            </div>
+            
+            <div className="space-y-2">
+              {form.details.map((d, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input aria-label={`Detail ${i + 1} name`} placeholder="Color" value={d.key} onChange={(e) => setDetail(i, 'key', e.target.value)} className="!space-y-0 bg-slate-50 border-slate-200 focus:bg-white rounded-lg text-sm h-9" />
+                  <Input aria-label={`Detail ${i + 1} value`} placeholder="Black" value={d.value} onChange={(e) => setDetail(i, 'value', e.target.value)} className="!space-y-0 bg-slate-50 border-slate-200 focus:bg-white rounded-lg text-sm h-9" />
+                  <button
+                    type="button"
+                    onClick={() => patch({ details: form.details.filter((_, idx) => idx !== i) })}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Right Column: Sticky Summary (1 Column) */}
+        <div className="lg:col-span-1">
+          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden sticky top-24">
+            
+            <div className="border-b border-slate-100 bg-slate-50/50 p-5">
+              <h3 className="font-bold text-slate-900 text-sm">Summary & AI Generation</h3>
+            </div>
+
+            <div className="p-5 space-y-3">
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                <p className="text-xs font-medium text-slate-600">AI will write the product name, description, and SEO tags.</p>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                <p className="text-xs font-medium text-slate-600">Social media captions for Instagram and Facebook.</p>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                <p className="text-xs font-medium text-slate-600">Takes about 60 seconds to generate.</p>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 p-5 space-y-3 bg-slate-50/30">
+              <Button 
+                onClick={() => save('generate')} 
+                loading={saving === 'generate'} 
+                className="w-full rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-all py-5 text-sm font-bold"
+              >
+                <Sparkles className="h-4 w-4 mr-2" /> {isEdit ? 'Save & Regenerate' : 'Save & Generate AI'}
+              </Button>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold h-10 text-xs" onClick={cancel} disabled={saving !== 'none'}>
+                  Cancel
+                </Button>
+                <Button variant="outline" className="flex-1 rounded-xl border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold h-10 text-xs" onClick={() => save('save')} loading={saving === 'save'}>
+                  <Save className="h-3.5 w-3.5 mr-1.5" /> Draft
+                </Button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </div>
 
       <ConfirmDialog

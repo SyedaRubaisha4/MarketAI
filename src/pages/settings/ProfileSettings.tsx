@@ -74,7 +74,14 @@ export function ProfileSettings() {
         </div>
         <p className="mt-3 text-xs text-slate-400">Business details are edited under the Brand tab.</p>
         <div className="mt-5 flex justify-end">
-          <Button onClick={save} loading={saving}>Save Changes</Button>
+          {/* BUTTON FIX: Black Theme */}
+          <Button 
+            onClick={save} 
+            loading={saving} 
+            className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-md px-6 font-bold"
+          >
+            Save Changes
+          </Button>
         </div>
       </div>
 

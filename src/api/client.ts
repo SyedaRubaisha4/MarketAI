@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'http://localhost:8000/api/',
+  baseURL: 'https://market-ai-backend-p143.onrender.com/api/',
   headers: { 'Content-Type': 'application/json' },
 });
 

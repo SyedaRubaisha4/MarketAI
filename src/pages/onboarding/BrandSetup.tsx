@@ -62,11 +62,11 @@ export default function BrandSetup() {
   return (
     <AuthLayout side={<OnboardingSide />}>
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary-700">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-900">
           <CheckCircle2 className="h-4 w-4" aria-hidden /> Step 3 of 3 — Final step
         </div>
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-          <div className="h-full w-full rounded-full bg-gradient-to-r from-primary-500 to-primary-700" aria-hidden />
+          <div className="h-full w-full rounded-full bg-gradient-to-r from-slate-700 to-slate-900" aria-hidden />
         </div>
       </div>
 
@@ -81,7 +81,14 @@ export default function BrandSetup() {
 
       <div className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Button variant="ghost" onClick={() => save(true)} disabled={loading}>Skip for now</Button>
-        <Button onClick={() => save(false)} loading={loading} size="lg">Save &amp; Continue</Button>
+        <Button
+          onClick={() => save(false)}
+          loading={loading}
+          size="lg"
+          className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-md px-6 font-bold"
+        >
+          Save &amp; Continue
+        </Button>
       </div>
     </AuthLayout>
   )
@@ -89,12 +96,12 @@ export default function BrandSetup() {
 
 function OnboardingSide() {
   return (
-    <div className="relative flex h-full flex-col justify-center overflow-hidden bg-gradient-to-br from-primary-800 via-primary-700 to-primary-600 px-16 text-white">
+    <div className="relative flex h-full flex-col justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-16 text-white">
       <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/10 blur-2xl" aria-hidden />
       <h2 className="relative max-w-md text-3xl font-bold leading-tight tracking-tight">
-        Content that sounds like <em className="not-italic underline decoration-primary-300 underline-offset-8">you</em>, not a robot.
+        Content that sounds like <em className="not-italic underline decoration-slate-400 underline-offset-8">you</em>, not a robot.
       </h2>
-      <p className="relative mt-4 max-w-md text-lg text-primary-100">
+      <p className="relative mt-4 max-w-md text-lg text-slate-300">
         Your brand voice shapes every description, caption, and headline the AI writes — set it once, use it everywhere.
       </p>
       <div className="relative mt-10 grid max-w-md grid-cols-2 gap-3">

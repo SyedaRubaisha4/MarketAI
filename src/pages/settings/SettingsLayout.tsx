@@ -22,8 +22,11 @@ export function SettingsLayout() {
             role="tab"
             className={({ isActive }) =>
               cn(
-                'flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-                isActive ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                'flex shrink-0 items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition-all duration-200',
+                // Active state ko Black kar diya hai, hover state ko light grey
+                isActive 
+                  ? 'bg-slate-900 text-white shadow-md' 
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900',
               )
             }
           >
