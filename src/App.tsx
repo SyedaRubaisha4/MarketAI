@@ -66,10 +66,12 @@ function RequireOnboarded({ children }: { children: JSX.Element }) {
   return children;
 }
 function GuestOnly({ children }: { children: JSX.Element }) {
-  const { session, loading } = useApp();
+  const { session, user, loading } = useApp();
   
   if (loading) return <div className="flex h-screen items-center justify-center text-slate-500">Loading...</div>;
-  if (session) return <Navigate to="/dashboard" replace />;
+  // Only bounce authenticated users away once the profile is actually loaded;
+  // otherwise a session flag with a failed profile fetch loops login <-> dashboard.
+  if (session && user) return <Navigate to="/dashboard" replace />;
   
   return children;
 }
