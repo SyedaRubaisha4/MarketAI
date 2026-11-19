@@ -6,6 +6,7 @@ import { Button, ButtonLink } from '../../components/ui/Button'
 import { EmptyState } from '../../components/EmptyState'
 import { cn } from '../../lib/cn'
 import { api } from '../../api/client'; 
+import type { GeneratedContent } from '../../types'
 
 const TASKS = [
   'Analyzing product image',
@@ -75,7 +76,7 @@ export default function Generate() {
               },
             };
 
-            setContent(product.id, mappedContent); 
+            setContent(product.id, mappedContent as GeneratedContent); 
             setProductStatus(product.id, 'content_ready')
             setDone(true)
             toast('Success', { description: 'AI content generated successfully!' })
@@ -156,7 +157,7 @@ export default function Generate() {
               },
             };
 
-            setContent(product.id, mappedContent)
+            setContent(product.id, mappedContent as GeneratedContent)
             setProductStatus(product.id, 'content_ready')
             setDone(true)
             toast('Content regenerated', { description: `${product.name} marketing package is ready to review.` })

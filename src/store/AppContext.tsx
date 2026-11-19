@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import type {
-  BrandProfile, GeneratedContent, Notification, Platform, Product, ProductStatus,
+  BrandProfile, ContentSectionKey, GeneratedContent, Notification, Platform, Product, ProductStatus,
   ScheduledPost, SocialAccount, Subscription, ToastData, User,
 } from '../types'
 import { api } from '../api/client'
@@ -45,7 +45,7 @@ interface AppContextValue {
   contents: Record<string, GeneratedContent>
   socialAccounts: SocialAccount[]
   scheduledPosts: ScheduledPost[]
-  subscription: Subscription | null
+  subscription: Subscription
   notifications: Notification[]
   loading: boolean
   session: boolean
@@ -59,15 +59,21 @@ interface AppContextValue {
   completeOnboarding: (brand: any) => void;
   skipOnboarding: () => void;
   saveBrand: (brand: any) => void;
-  addProduct: (p: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { details?: any[] }) => Promise<Product | null>
+  addProduct: (p: Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { details?: any[]; description?: string }) => Promise<Product | null>
   deleteProduct: (id: string) => Promise<void>
   updateProduct: (id: string, patch: Partial<Product>) => Promise<void>
   setContent: (productId: string, content: GeneratedContent) => void;
   updateContent: (productId: string, updater: (c: any) => any) => void;
-  approveSection: (productId: string, key: any) => void;
+  approveSection: (productId: string, key: ContentSectionKey) => void;
   schedulePost: (post: Omit<ScheduledPost, 'id' | 'createdAt' | 'status'>) => Promise<ScheduledPost | null>
+  deleteScheduledPost: (id: string) => Promise<void>
+  publishPostNow: (id: string) => void
   setProductStatus: (id: string, status: ProductStatus) => Promise<void>;
   markNotificationsRead: () => void;
+  addNotification: (title: string, description: string) => void
+  updateProfile: (fullName: string, email: string) => void
+  updateSubscription: (next: Subscription) => void
+  disconnectAccount: (platform: Platform) => void
   toast: (title: string, opts?: { description?: string; variant?: ToastData['variant'] }) => void
   dismissToast: (id: number) => void
   resetAll: () => void
@@ -82,12 +88,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([])
   const [contents, setContents] = useState<Record<string, GeneratedContent>>({})
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([])
-  const [subscription, setSubscription] = useState<Subscription | null>({
-    plan: 'Free Trial',
-    status: 'active',
-    mockState: 'normal',
+  const [subscription, setSubscription] = useState<Subscription>({
+    plan: 'trial',
+    trialStartedAt: new Date().toISOString(),
     trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-  } as any)
+    mockState: 'normal',
+  })
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [toasts, setToasts] = useState<ToastData[]>([])
@@ -254,6 +260,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     markNotificationsRead: () => {
       // NOTE: if your Notification type uses a different field (e.g. isRead), change `read` here
       setNotifications((prev) => prev.map((n: any) => ({ ...n, read: true })));
+    },
+
+    addNotification: (title: string, description: string) => {
+      setNotifications((prev) => [
+        { id: uid(), title, description, createdAt: new Date().toISOString(), read: false },
+        ...prev,
+      ])
+    },
+
+    updateProfile: (fullName: string, email: string) => {
+      setUser((prev) => (prev ? { ...prev, fullName, email } : prev))
+    },
+
+    updateSubscription: (next: Subscription) => {
+      setSubscription(next)
+    },
+
+    disconnectAccount: (platform: Platform) => {
+      setSocialAccounts((prev) => prev.filter((a) => a.platform !== platform))
     },
 
     logout: () => {
@@ -425,6 +450,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           price: Number(p.price),
           currency: p.currency || 'Rs',
           category: p.category,
+          details: p.details ?? [],
           status: 'draft',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -491,6 +517,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
 
+    deleteScheduledPost: async (id: string) => {
+      setScheduledPosts((prev) => prev.filter((p) => p.id !== id))
+      try {
+        await api.delete(`schedule/delete/${id}/`)
+      } catch (e) {
+        console.error('Schedule delete error:', e)
+      }
+    },
+
+    publishPostNow: (id: string) => {
+      setScheduledPosts((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, status: 'published' as const } : p)),
+      )
+      setProducts((prev) =>
+        prev.map((p) => {
+          const post = scheduledPosts.find((s) => s.id === id)
+          return post && p.id === post.productId ? { ...p, status: 'published' } : p
+        }),
+      )
+    },
+
     toast,
     dismissToast,
     resetAll: () => {
@@ -510,9 +557,14 @@ export function useApp() {
 export function buildContentFor(product: Product, brand: BrandProfile, variant = 0) {
   return buildMockContent(product, brand, variant)
 }
-export function useTrialStatus() {
+export function useTrialStatus(): 'normal' | 'ending' | 'expired' {
   const { subscription } = useApp()
   if (!subscription) return 'normal'
   if (subscription.mockState === 'expired') return 'expired'
+  if (subscription.mockState === 'ending') return 'ending'
+  if (subscription.plan !== 'trial') return 'normal'
+  const daysLeft = Math.ceil((new Date(subscription.trialEndsAt).getTime() - Date.now()) / 86400000)
+  if (daysLeft <= 0) return 'expired'
+  if (daysLeft <= 3) return 'ending'
   return 'normal'
 }
