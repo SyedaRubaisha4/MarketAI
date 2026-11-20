@@ -22,6 +22,32 @@ const getErrMsg = (error: any, fallback: string): string => {
   }
 }
 
+// Brand ids arrive in different shapes depending on the endpoint; only accept
+// a real scalar id and never persist "[object Object]" / "undefined".
+const validId = (v: unknown): string | null => {
+  if (typeof v === 'number' && Number.isFinite(v)) return String(v)
+  if (typeof v === 'string') {
+    const s = v.trim()
+    if (s && s !== 'null' && s !== 'undefined' && s !== '[object Object]') return s
+  }
+  return null
+}
+
+const extractBrandId = (src: any): string | null =>
+  validId(src?.brand_id) ??
+  validId(src?.brandId) ??
+  validId(src?.brand?.id) ??
+  validId(src?.brands?.[0]?.id) ??
+  null
+
+const extractCreatedBrandId = (data: any): string | null =>
+  extractBrandId(data) ??
+  validId(data?.id) ??
+  validId(data?.result?.id) ??
+  extractBrandId(data?.result) ??
+  extractBrandId(data?.data) ??
+  null
+
 // Build the frontend User object from the backend profile response
 const buildUser = (profile: any): User =>
   ({
@@ -121,8 +147,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loadedUser = buildUser(profile)
       setUser(loadedUser)
 
-      if (profile.brand_id) {
-        localStorage.setItem('brand_id', profile.brand_id)
+      const brandId =
+        extractBrandId(profile) ??
+        extractBrandId(profile.user) ??
+        extractBrandId(userRes.data)
+      if (brandId) {
+        localStorage.setItem('brand_id', brandId)
+      } else {
+        // The account has no brand: drop any stale id from a previous session
+        // so products are never attached to the wrong brand.
+        localStorage.removeItem('brand_id')
       }
     } catch (e) {
       console.log('User fetch error', e)
@@ -224,6 +258,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (access)  localStorage.setItem('access_token', access);
         if (refresh) localStorage.setItem('refresh_token', refresh);
         localStorage.setItem(SESSION_KEY, '1');
+        // Never reuse a brand id from a previous account; loadData re-fills it.
+        localStorage.removeItem('brand_id');
 
         // Fetch profile + products + stats + schedule, and get the user back
         const loggedInUser = await loadData();
@@ -386,11 +422,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         setBrand({ ...brandData, completed: true } as any);
 
-        if (res.data && res.data.id) {
-          localStorage.setItem('brand_id', res.data.id);
+        const brandId = extractCreatedBrandId(res.data);
+        if (!brandId) {
+          console.error('Brand created but no id found in response:', res.data);
+          toast("Error", {
+            description: "Brand saved but the server did not return a brand ID. Please try again.",
+            variant: "error",
+          });
+          return;
         }
 
-        if (user) setUser({ ...user, onboarded: true, brandId: res.data.id });
+        localStorage.setItem('brand_id', brandId);
+
+        if (user) setUser({ ...user, onboarded: true, brandId });
 
         toast("Onboarding Complete", { description: "Brand details have been saved!" });
       } catch (e: any) {
@@ -411,10 +455,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     addProduct: async (p) => {
       try {
-        const savedBrand = localStorage.getItem('brand_id');
+        const savedBrand = validId(localStorage.getItem('brand_id')) ?? validId(user?.brandId);
 
         if (!savedBrand) {
-          toast("Error", { description: "Brand ID not found. Please create brand first.", variant: "error" });
+          toast("Error", { description: "Brand ID not found. Please create your brand first.", variant: "error" });
           return null;
         }
 
