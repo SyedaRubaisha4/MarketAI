@@ -48,6 +48,17 @@ const extractCreatedBrandId = (data: any): string | null =>
   extractBrandId(data?.data) ??
   null
 
+// Login returns the user's brand id alongside the tokens; accept it wherever
+// the backend nests it.
+const extractLoginBrandId = (data: any): string | null =>
+  extractBrandId(data) ??
+  extractBrandId(data?.user) ??
+  extractBrandId(data?.result) ??
+  extractBrandId(data?.result?.user) ??
+  extractBrandId(data?.data) ??
+  extractBrandId(data?.data?.user) ??
+  null
+
 const toBusinessType = (v: unknown): BusinessType =>
   typeof v === 'string' && (BUSINESS_TYPES as string[]).includes(v) ? (v as BusinessType) : 'Other'
 
@@ -149,8 +160,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   })
 
   // Loads everything for the logged-in user. Used on app start AND right after login.
+  // `fallbackBrandId` comes from the login response and is used when the profile
+  // endpoint does not repeat the brand id.
   // Returns the user profile (or null if it could not be loaded).
-  const loadData = useCallback(async (): Promise<User | null> => {
+  const loadData = useCallback(async (fallbackBrandId?: string | null): Promise<User | null> => {
     const token = localStorage.getItem('access_token')
     if (!token) return null
 
@@ -163,12 +176,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loadedUser = buildUser(profile)
       setUser(loadedUser)
 
+      // login() clears any stale id before storing the fresh one, so the stored
+      // value is safe to keep when the profile endpoint omits the brand.
       const brandId =
         extractBrandId(profile) ??
         extractBrandId(profile.user) ??
-        extractBrandId(userRes.data)
+        extractBrandId(userRes.data) ??
+        validId(fallbackBrandId) ??
+        validId(localStorage.getItem('brand_id'))
       if (brandId) {
         localStorage.setItem('brand_id', brandId)
+        loadedUser = { ...loadedUser, brandId }
+        setUser(loadedUser)
       } else {
         // The account has no brand: drop any stale id from a previous session
         // so products are never attached to the wrong brand.
@@ -274,11 +293,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (access)  localStorage.setItem('access_token', access);
         if (refresh) localStorage.setItem('refresh_token', refresh);
         localStorage.setItem(SESSION_KEY, '1');
-        // Never reuse a brand id from a previous account; loadData re-fills it.
+
+        // The login response carries this account's brand id. Drop any stale id
+        // from a previous account first, then store the fresh one for the session.
+        const loginBrandId = extractLoginBrandId(res.data);
         localStorage.removeItem('brand_id');
+        if (loginBrandId) localStorage.setItem('brand_id', loginBrandId);
 
         // Fetch profile + products + stats + schedule, and get the user back
-        const loggedInUser = await loadData();
+        const loggedInUser = await loadData(loginBrandId);
         if (!loggedInUser) {
           throw new Error('Could not load your profile. Please try again.');
         }
@@ -291,6 +314,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem('brand_id');
         toast('Login failed', {
           description: getErrMsg(error, 'Invalid email or password'),
           variant: 'error',
