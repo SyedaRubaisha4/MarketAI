@@ -9,7 +9,7 @@ import { api } from '../../api/client';
 import { buildBrandPayload } from '../../store/AppContext';
 
 export function BrandSettings() {
-  const { brand, toast } = useApp();
+  const { brand, toast, saveBrand } = useApp();
   
   const [form, setForm] = useState<BrandProfile>({
     businessName: brand?.businessName || '',
@@ -80,7 +80,7 @@ export function BrandSettings() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      toast('Brand profile saved', { description: 'AI content will now match your brand voice.' });
+      saveBrand({ ...form, completed: true });
     } catch (e) {
       console.error("Brand save error", e);
       toast('Error', { description: 'Brand update failed', variant: 'error' });

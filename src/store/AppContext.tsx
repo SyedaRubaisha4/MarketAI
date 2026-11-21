@@ -7,6 +7,7 @@ import { api } from '../api/client'
 import { BUSINESS_TYPES, buildMockContent } from '../data/mockData'
 
 const SESSION_KEY = 'marketai-session-v1'
+const BRAND_KEY = 'marketai-brand-v1'
 const uid = () => Math.random().toString(36).slice(2, 10)
 
 // Turn whatever the backend sends back into a readable string
@@ -43,6 +44,7 @@ const extractBrandId = (src: any): string | null =>
 const extractCreatedBrandId = (data: any): string | null =>
   extractBrandId(data) ??
   validId(data?.id) ??
+  validId(data?.data?.id) ??
   validId(data?.result?.id) ??
   extractBrandId(data?.result) ??
   extractBrandId(data?.data) ??
@@ -77,6 +79,41 @@ const buildUser = (profile: any): User =>
     businessType: toBusinessType(profile.brand?.business_type ?? profile.business_type),
     onboarded: profile.is_onboarded === true,
   }) as User
+
+const asStringArray = (v: unknown): string[] => {
+  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string')
+  if (typeof v === 'string') return v.split(',').map((s) => s.trim()).filter(Boolean)
+  return []
+}
+
+const toLanguage = (v: unknown): BrandProfile['language'] =>
+  v === 'Urdu' || v === 'English + Urdu' ? v : 'English'
+
+// Normalize the brand object the backend returns/accepts into the frontend shape.
+export const buildBrandProfile = (raw: any): BrandProfile => ({
+  businessName: raw?.business_name || raw?.businessName || '',
+  businessType: toBusinessType(raw?.business_type ?? raw?.businessType),
+  description: raw?.description || '',
+  targetCustomers: raw?.target_customer_class || raw?.targetCustomers || '',
+  language: toLanguage(raw?.language),
+  tones: asStringArray(raw?.tone_of_voice ?? raw?.tones),
+  wordsToAvoid: asStringArray(raw?.words_to_avoid ?? raw?.wordsToAvoid),
+  keywords: asStringArray(raw?.brand_keywords ?? raw?.keywords),
+  completed: true,
+})
+
+export const readStoredBrand = (): BrandProfile | null => {
+  try {
+    const raw = localStorage.getItem(BRAND_KEY)
+    return raw ? buildBrandProfile(JSON.parse(raw)) : null
+  } catch {
+    return null
+  }
+}
+
+const persistBrand = (profile: BrandProfile) => {
+  localStorage.setItem(BRAND_KEY, JSON.stringify(profile))
+}
 
 // Single source of truth for the brand -> API field mapping so onboarding and
 // settings can never drift apart.
@@ -136,7 +173,7 @@ const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [brand, setBrand] = useState<BrandProfile | null>(null)
+  const [brand, setBrand] = useState<BrandProfile | null>(() => readStoredBrand())
   const [products, setProducts] = useState<Product[]>([])
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([])
   const [contents, setContents] = useState<Record<string, GeneratedContent>>({})
@@ -192,6 +229,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // The account has no brand: drop any stale id from a previous session
         // so products are never attached to the wrong brand.
         localStorage.removeItem('brand_id')
+      }
+
+      const rawBrand = profile.brand ?? userRes.data?.brand
+      if (rawBrand && typeof rawBrand === 'object') {
+        const normalized = buildBrandProfile(rawBrand)
+        persistBrand(normalized)
+        setBrand(normalized)
       }
     } catch (e) {
       console.log('User fetch error', e)
@@ -294,10 +338,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (refresh) localStorage.setItem('refresh_token', refresh);
         localStorage.setItem(SESSION_KEY, '1');
 
-        // The login response carries this account's brand id. Drop any stale id
-        // from a previous account first, then store the fresh one for the session.
+        // The login response carries this account's brand id. Drop any stale
+        // brand data from a previous account first, then store the fresh id.
         const loginBrandId = extractLoginBrandId(res.data);
         localStorage.removeItem('brand_id');
+        localStorage.removeItem(BRAND_KEY);
+        setBrand(null);
         if (loginBrandId) localStorage.setItem('brand_id', loginBrandId);
 
         // Fetch profile + products + stats + schedule, and get the user back
@@ -451,8 +497,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         });
 
-        setBrand({ ...brandData, completed: true } as any);
-
         const brandId = extractCreatedBrandId(res.data);
         if (!brandId) {
           console.error('Brand created but no id found in response:', res.data);
@@ -463,7 +507,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        // Persist the id + normalized brand from the create response so product
+        // adds use the backend's id and settings can be prefilled.
+        const savedBrand: BrandProfile = res.data?.data
+          ? buildBrandProfile(res.data.data)
+          : { ...(brandData as BrandProfile), completed: true };
         localStorage.setItem('brand_id', brandId);
+        persistBrand(savedBrand);
+        setBrand(savedBrand);
 
         if (user) setUser({ ...user, onboarded: true, brandId });
 
@@ -480,7 +531,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
 
     saveBrand: (brandData) => {
-      setBrand({ ...brandData, completed: true } as any)
+      const next: BrandProfile = { ...(brandData as BrandProfile), completed: true }
+      persistBrand(next)
+      setBrand(next)
       toast("Brand Saved")
     },
 
