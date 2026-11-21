@@ -6,6 +6,7 @@ import { Input, Select } from '../../components/ui/Field';
 import { BUSINESS_TYPES } from '../../data/mockData';
 import type { BrandProfile } from '../../types';
 import { api } from '../../api/client';
+import { buildBrandPayload } from '../../store/AppContext';
 
 export function BrandSettings() {
   const { brand, toast } = useApp();
@@ -75,16 +76,7 @@ export function BrandSettings() {
 
       const token = localStorage.getItem('access_token');
       
-      await api.patch(`brands/${brandId}/update/`, {
-        business_name: form.businessName,
-        business_type: form.businessType,
-        description: form.description,
-        target_customer_class: form.targetCustomers,
-        tone_of_voice: form.tones?.join(', '),
-        language: form.language,
-        words_to_avoid: form.wordsToAvoid,
-        brand_keywords: form.keywords,
-      }, {
+      await api.patch(`brands/${brandId}/update/`, buildBrandPayload(form), {
         headers: { Authorization: `Bearer ${token}` }
       });
 

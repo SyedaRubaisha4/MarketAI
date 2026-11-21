@@ -5,7 +5,7 @@ export type BusinessType =
   | 'Automotive' | 'Tools & Hardware' | 'Art & Crafts' | 'Music & Instruments'
   | 'Office Supplies' | 'Garden & Outdoor' | 'Kitchen & Dining' | 'Phones & Tablets'
   | 'Computers & Laptops' | 'Shoes & Footwear' | 'Bags & Luggage' | 'Watches'
-  | 'Eyewear' | 'Retail' | 'Other'
+  | 'Eyewear' | 'Other'
 
 export interface User {
   id: string

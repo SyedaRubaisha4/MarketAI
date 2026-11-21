@@ -1,10 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import type {
-  BrandProfile, ContentSectionKey, GeneratedContent, Notification, Platform, Product, ProductStatus,
+  BrandProfile, BusinessType, ContentSectionKey, GeneratedContent, Notification, Platform, Product, ProductStatus,
   ScheduledPost, SocialAccount, Subscription, ToastData, User,
 } from '../types'
 import { api } from '../api/client'
-import { buildMockContent } from '../data/mockData'
+import { BUSINESS_TYPES, buildMockContent } from '../data/mockData'
 
 const SESSION_KEY = 'marketai-session-v1'
 const uid = () => Math.random().toString(36).slice(2, 10)
@@ -48,6 +48,9 @@ const extractCreatedBrandId = (data: any): string | null =>
   extractBrandId(data?.data) ??
   null
 
+const toBusinessType = (v: unknown): BusinessType =>
+  typeof v === 'string' && (BUSINESS_TYPES as string[]).includes(v) ? (v as BusinessType) : 'Other'
+
 // Build the frontend User object from the backend profile response
 const buildUser = (profile: any): User =>
   ({
@@ -59,10 +62,23 @@ const buildUser = (profile: any): User =>
       profile.user?.name ||
       profile.user?.username ||
       'User',
-    businessName: 'My Business',
-    businessType: 'Retail',
+    businessName: profile.brand?.business_name || profile.business_name || 'My Business',
+    businessType: toBusinessType(profile.brand?.business_type ?? profile.business_type),
     onboarded: profile.is_onboarded === true,
   }) as User
+
+// Single source of truth for the brand -> API field mapping so onboarding and
+// settings can never drift apart.
+export const buildBrandPayload = (brandData: Partial<BrandProfile>) => ({
+  business_name: brandData.businessName,
+  business_type: brandData.businessType,
+  description: brandData.description,
+  target_customer_class: brandData.targetCustomers,
+  tone_of_voice: (brandData.tones || []).join(', '),
+  language: brandData.language,
+  words_to_avoid: brandData.wordsToAvoid || [],
+  brand_keywords: brandData.keywords || [],
+})
 
 interface AppContextValue {
   user: User | null
@@ -405,16 +421,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const res = await api.post('brands/create/', {
-          business_name: brandData.businessName,
-          business_type: brandData.businessType,
-          description: brandData.description,
-          target_customer_class: brandData.targetCustomers,
-          tone_of_voice: brandData.tones?.join(', '),
-          language: brandData.language,
-          words_to_avoid: brandData.wordsToAvoid,
-          brand_keywords: brandData.keywords,
-        }, {
+        const res = await api.post('brands/create/', buildBrandPayload(brandData), {
           headers: {
             Authorization: `Bearer ${token}`
           }

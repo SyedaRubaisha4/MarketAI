@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { CheckCircle2 } from 'lucide-react'
 import { AuthLayout } from '../auth/AuthLayout'
 import { Button } from '../../components/ui/Button'
+import { Select } from '../../components/ui/Field'
 import { BrandFields, type BrandFieldErrors } from '../../components/BrandFields'
 import { useApp } from '../../store/AppContext'
+import { BUSINESS_TYPES } from '../../data/mockData'
 import type { BrandProfile } from '../../types'
 
 export default function BrandSetup() {
@@ -12,7 +14,8 @@ export default function BrandSetup() {
   const { brand, completeOnboarding, skipOnboarding, toast } = useApp()
   const [form, setForm] = useState<BrandProfile>({
     businessName: brand?.businessName || '',
-    businessType: brand?.businessType || 'Retail',
+    // Empty string keeps the placeholder visible; save() blocks submission until a real type is picked.
+    businessType: brand?.businessType || ('' as BrandProfile['businessType']),
     description: brand?.description || '',
     targetCustomers: brand?.targetCustomers || '',
     language: brand?.language || 'English',
@@ -28,6 +31,15 @@ export default function BrandSetup() {
 
   const save = async (skip: boolean) => {
     if (!skip) {
+      if (!form.businessName.trim()) {
+        toast('Business name is required', { variant: 'info' })
+        return
+      }
+      if (!form.businessType) {
+        toast('Select your business type', { variant: 'info' })
+        return
+      }
+
       const er: BrandFieldErrors = {}
       if (form.description.trim().length < 20) er.description = 'Describe your business in at least 20 characters.'
       if (!form.targetCustomers.trim()) er.targetCustomers = 'Tell us who your customers are.'
@@ -74,6 +86,17 @@ export default function BrandSetup() {
       <p className="mt-2 text-sm text-slate-600">
         Help AI understand your business so your product content sounds consistent with your brand.
       </p>
+
+      <div className="mt-8">
+        <Select
+          label="Business Type"
+          value={form.businessType}
+          onChange={(e) => update({ businessType: e.target.value as BrandProfile['businessType'] })}
+          options={BUSINESS_TYPES.map((b) => ({ value: b, label: b }))}
+          placeholder="Select a business type"
+          required
+        />
+      </div>
 
       <div className="mt-8">
         <BrandFields form={form} update={update} errors={errors} setError={setError} />
